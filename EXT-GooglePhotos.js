@@ -99,6 +99,7 @@ Module.register("EXT-GooglePhotos", {
             }
           }, 10000)
         }
+        this.sendNotification("EXT_HELLO", this.name)
         break
       case "EXT-GooglePhotos-Start": // @todo better (check api and after recipe)
         if (this.config.displayType == "Recipe" && this.config.useGooglePhotosAPI)
