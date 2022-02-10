@@ -29,28 +29,29 @@ module.exports = NodeHelper.create({
   initialize: async function (config) {
     this.config = config
     if (this.config.debug) logGP = (...args) => { console.log("[GPHOTOS]", ...args) }
-    if (this.config.useGooglePhotosAPI) {
-      logGP("Starting GooglePhotosAPI module...")
-      logGP("Check credentials.json...")
-      if (fs.existsSync(__dirname + "/credentials.json")) {
-        this.config.CREDENTIALS = __dirname + "/credentials.json"
-      } else {
-        if(fs.existsSync(path.resolve(__dirname + "/../MMM-GoogleAssistant/credentials.json"))) {
-         this.config.CREDENTIALS = path.resolve(__dirname + "/../MMM-GoogleAssistant/credentials.json")
-        }
+    logGP("Check credentials.json...")
+    if (fs.existsSync(__dirname + "/credentials.json")) {
+      this.config.CREDENTIALS = __dirname + "/credentials.json"
+    } else {
+      if(fs.existsSync(path.resolve(__dirname + "/../MMM-GoogleAssistant/credentials.json"))) {
+       this.config.CREDENTIALS = path.resolve(__dirname + "/../MMM-GoogleAssistant/credentials.json")
       }
-      if (!this.config.CREDENTIALS) return console.log("[PHOTOS] credentials.json file not found !")
-      else logGP("credentials.json found in", this.config.CREDENTIALS)
-
-      if (!fs.existsSync(__dirname + "/tokenGP.json")) {
-        console.log("[PHOTOS] tokenGP.json file not found !")
-        return
-      }
-
-      this.config.TOKEN = __dirname + "/tokenGP.json"
-      this.config.CACHE = __dirname + "/tmp"
-      this.photos = new GPhotos(this.config, this.config.debug, (noti, params) => this.sendSocketNotification(noti, params))
-      this.photos.start()
     }
+    if (!this.config.CREDENTIALS) {
+      this.sendSocketNotification("GPError", "Error: credentials.json file not found !")
+      console.error("[GPHOTOS] credentials.json file not found !")
+    }
+    else logGP("credentials.json found in", this.config.CREDENTIALS)
+
+    if (!fs.existsSync(__dirname + "/tokenGP.json")) {
+      this.sendSocketNotification("GPError", "Error: tokenGP.json file not found !")
+      console.error("[GPHOTOS] tokenGP.json file not found !")
+      return
+    }
+
+    this.config.TOKEN = __dirname + "/tokenGP.json"
+    this.config.CACHE = __dirname + "/tmp"
+    this.photos = new GPhotos(this.config, this.config.debug, (noti, params) => this.sendSocketNotification(noti, params))
+    this.photos.start()
   }
 })

@@ -1,17 +1,17 @@
 /**
  ** Module : EXT-GooglePhotos
  ** @bugsounet
- ** ©01-2022
- ** support: http://forum.bugsounet.fr
+ ** ©02-2022
+ ** @eouia code based
+ ** support: https://forum.bugsounet.fr
  **/
 
-logNOTI = (...args) => { /* do nothing */ }
+logGP = (...args) => { /* do nothing */ }
 
 Module.register("EXT-GooglePhotos", {
   defaults: {
     debug: true,
-    useGooglePhotosAPI: false,
-    displayType: "none",
+    displayType: 0,
     displayDelay: 10 * 1000,
     displayInfos: true,
     albums: [],
@@ -24,6 +24,12 @@ Module.register("EXT-GooglePhotos", {
 
   start: function () {
     if (this.config.debug) logGP = (...args) => { console.log("[GPHOTOS]", ...args) }
+    var checked = false
+    if (typeof this.config.displayType === "number" && this.config.displayType >= 0 && this.config.displayType <= 1) checked = true
+    if (!checked) {
+      this.config.displayType = 0
+      console.error("GPhoto: displayType error --> correct with default")
+    }
     this.config.LoadingText= this.translate("LOADING")
     this.config.GPAlbumName= this.translate("GPAlbumName")
     this.GPhotos= {
@@ -34,16 +40,19 @@ Module.register("EXT-GooglePhotos", {
       needMorePicsFlag: true,
       warning: 0
     }
-    this.photos= { //@todo : display photos response array 
-      displayed: false,
-      position: 0,
-      urls: null,
-      length: 0
-    }
   },
 
-  getScripts: function() {
-    return [ ]
+  getTranslations: function() {
+    return {
+      en: "translations/en.json",
+      fr: "translations/fr.json",
+      it: "translations/it.json",
+      de: "translations/de.json",
+      es: "translations/es.json",
+      nl: "translations/nl.json",
+      pt: "translations/pt.json",
+      ko: "translations/ko.json"
+    }
   },
 
   getStyles: function () {
@@ -55,7 +64,7 @@ Module.register("EXT-GooglePhotos", {
 
   getDom: function() {
     /** GPhotos Module mode**/
-    if (this.config.useGooglePhotosAPI && this.config.displayType == "Module") {
+    if (this.config.displayType == 1) {
       var GPhotos = document.createElement("div")
       GPhotos.id = "EXT_GPHOTO"
       GPhotos.style.height= this.config.moduleHeight + "px"
@@ -77,8 +86,7 @@ Module.register("EXT-GooglePhotos", {
       GPhotos.appendChild(GPhotosCurrent)
       GPhotos.appendChild(GPhotosInfo)
       return GPhotos
-    }
-    else {
+    } else {
       var dom = document.createElement("div")
       dom.style.display = 'none'
       return dom
@@ -90,24 +98,8 @@ Module.register("EXT-GooglePhotos", {
       case "DOM_OBJECTS_CREATED":
         this.prepare()
         this.sendSocketNotification("INIT", this.config)
-        if (this.config.displayType == "Background" || this.config.displayType == "Module") {
-          setTimeout(() => {
-            if (this.config.useGooglePhotosAPI) this.showBackgroundGooglePhotoAPI()
-            else {
-              //this.Informations("warning", {message: "GPhotosNotActivated"})
-              console.log("Warn: GPhotos not activated")
-            }
-          }, 10000)
-        }
         this.sendNotification("EXT_HELLO", this.name)
-        break
-      case "EXT-GooglePhotos-Start": // @todo better (check api and after recipe)
-        if (this.config.displayType == "Recipe" && this.config.useGooglePhotosAPI)
-          this.showGooglePhotos()
-        break
-      case "EXT-GooglePhotos-Stop":
-        if (this.config.displayType == "Recipe" && this.config.useGooglePhotosAPI)
-          this.hideGooglePhotoAPI()
+        setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 10000)
         break
     }
   },
@@ -120,18 +112,29 @@ Module.register("EXT-GooglePhotos", {
           this.GPhotos.needMorePicsFlag = false
           this.GPhotos.scanned = payload
           this.GPhotos.index = 0
-          //this.Informations("information", {message: "GPReceive", values: payload.length })
-          console.log("GPReceive", payload.length)
+          this.sendNotification("EXT_ALERT", {
+            type: "information",
+            message: this.translate("GPReceive", { VALUES: payload.length }),
+            icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png",
+            timer: 10000
+          })
+          logGP("GPReceive", payload.length)
         }
         break
       case "GPhotos_INIT":
         this.GPhotos.albums = payload
         break
+      case "GPError":
+        this.sendNotification("EXT_ALERT", {
+          type: "error",
+          message: payload,
+          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+        })
     }    
   },
 
   resume: function() {
-    if (this.config.displayType == "Background" && this.config.useGooglePhotosAPI) {
+    if (this.config.displayType == 0) {
       var GPhotos = document.getElementById("EXT_GPHOTO")
       GPhotos.classList.remove("hidden")
       logGP("GPhotos is resumed.")
@@ -139,7 +142,7 @@ Module.register("EXT-GooglePhotos", {
   },
 
   suspend: function() {
-    if (this.config.displayType == "Background" && this.config.useGooglePhotosAPI) {
+    if (this.config.displayType == 0) {
       var GPhotos = document.getElementById("EXT_GPHOTO")
       GPhotos.classList.add("hidden")
       logGP("GPhotos is suspended.")
@@ -148,15 +151,13 @@ Module.register("EXT-GooglePhotos", {
 
   prepare: function() {
     /** Create a popup for external photo display **/
-    /** @to see maybe recipe using structure ? **/
     var photo = document.createElement("img")
     photo.id = "EXT_PHOTO"
     photo.classList.add("hidden")
     document.body.appendChild(photo)
 
     /** Create a Fake module for Background using **/
-    if (this.config.displayType == "Background") {
-      if (!this.config.useGooglePhotosAPI) return
+    if (this.config.displayType == 0) {
       var nodes = document.getElementsByClassName("region fullscreen below")
       var pos = nodes[0].querySelector(".container")
       var children = pos.children
@@ -189,36 +190,11 @@ Module.register("EXT-GooglePhotos", {
       module.appendChild(content)
       pos.insertBefore(module, children[children.length])
     }
-
-    /** create a popup for Recipe using **/
-    if (this.config.displayType == "Recipe") {
-      var GPhotos = document.createElement("div")
-      GPhotos.id = "EXT_GPHOTO"
-      GPhotos.classList.add("hidden")
-      GPhotos.classList.add("popup")
-      var GPhotosBack = document.createElement("div")
-      GPhotosBack.id = "EXT_GPHOTO_BACK"
-      var GPhotosCurrent = document.createElement("div")
-      GPhotosCurrent.id = "EXT_GPHOTO_CURRENT"
-      GPhotosCurrent.addEventListener('animationend', ()=>{
-        GPhotosCurrent.classList.remove("animated")
-      })
-      var GPhotosInfo = document.createElement("div")
-      GPhotosInfo.id = "EXT_GPHOTO_INFO"
-      GPhotosInfo.innerHTML = this.config.LoadingText
-      if (!this.config.displayInfos) GPhotosInfo.classList.add("hidden")
-
-      GPhotos.appendChild(GPhotosBack)
-      GPhotos.appendChild(GPhotosCurrent)
-      GPhotos.appendChild(GPhotosInfo)
-      document.body.appendChild(GPhotos)
-    }
   },
 
   /** GPhotos API **/
   updatePhotos: function () {
-    if (this.GPhotos.scanned.length == 0) { // To see there bug
-      console.log("!!! GPhotos debug: " + this.GPhotos.scanned.length)
+    if (this.GPhotos.scanned.length == 0) {
       this.sendSocketNotification("GP_MORE_PICTS")
       return
     }
@@ -234,7 +210,6 @@ Module.register("EXT-GooglePhotos", {
     if (this.GPhotos.index >= this.GPhotos.scanned.length) {
       this.GPhotos.index = 0
       this.GPhotos.needMorePicsFlag = true
-      //if (this.config.displayType == "Recipe") this.hideGooglePhotoAPI()
     }
     if (this.GPhotos.needMorePicsFlag) {
       this.sendSocketNotification("GP_MORE_PICTS")
@@ -244,8 +219,11 @@ Module.register("EXT-GooglePhotos", {
   ready: function(url, target) {
     var hidden = document.createElement("img")
     hidden.onerror = () => {
-      console.log("[GPHOTOS] Failed to Load Image.")
-      //this.Informations({message: "GPFailedOpenURL" })
+      console.error("[GPHOTOS] Failed to Load Image.")
+      this.sendNotification("EXT_ALERT", {
+        type: "warning",
+        message: this.translate("GPFailedOpenURL")
+      })
       this.sendSocketNotification("GP_LOAD_FAIL", url)
     }
     hidden.onload = () => {
@@ -281,60 +259,27 @@ Module.register("EXT-GooglePhotos", {
       infoText.appendChild(albumTitle)
       infoText.appendChild(photoTime)
       info.appendChild(infoText)
-      logGP("GPHOTOS: Image loaded ["+ this.GPhotos.index + "/" + this.GPhotos.scanned.length + "]:", url)
+      logGP("Image loaded ["+ this.GPhotos.index + "/" + this.GPhotos.scanned.length + "]:", url)
       this.sendSocketNotification("GP_LOADED", url)
     }
     hidden.src = url
-  },
-
-  showGooglePhotoAPI: function () {
-    if (this.GPhotos.scanned.length == 0) {
-      clearTimeout(this.GPhotos.updateTimer)
-      this.GPhotos.updateTimer = null
-      //this.Informations({message: "GPNoPhotoFound" })
-      this.sendSocketNotification("GP_MORE_PICTS")
-      this.GPhotos.warning++
-      if (this.GPhotos.warning >= 5) {
-        //this.Warning({message: "GPError" })
-        console.log("GP Error")
-        this.GPhotos.warning = 0
-        return
-      }
-      this.GPhotos.updateTimer = setInterval(()=>{
-        this.showGooglePhotoAPI()
-      }, 15000)
-    } else {
-      //this.Informations({message: "GPOpen" })
-      clearTimeout(this.GPhotos.updateTimer)
-      this.GPhotos.updateTimer = null
-      //this.EXTLock()
-      this.photos.displayed = true
-      this.showDisplay()
-      this.updatePhotos()
-
-      this.GPhotos.updateTimer = setInterval(()=>{
-        this.updatePhotos()
-      }, this.config.displayDelay)
-    }
-  },
-
-  hideGooglePhotoAPI: function () {
-    this.stopGooglePhotoAPI()
-    //this.EXTUnlock()
-    this.photos.displayed = false
-    this.hideDisplay()
   },
 
   showBackgroundGooglePhotoAPI: function () {
     if (this.GPhotos.scanned.length == 0) {
       clearTimeout(this.GPhotos.updateTimer)
       this.GPhotos.updateTimer = null
-      //this.Informations({message: "GPNoPhotoFound" })
+      this.sendNotification("EXT_ALERT", {
+        type: "warning",
+        message: this.translate("GPNoPhotoFound")
+      })
       this.sendSocketNotification("GP_MORE_PICTS")
       this.GPhotos.warning++
       if (this.GPhotos.warning >= 5) {
-        //this.Warning({message: "GPError" })
-        console.log("GP Error")
+        this.sendNotification("EXT_ALERT", {
+          type: "warning",
+          message: this.translate("GPError")
+        })
         this.GPhotos.warning = 0
         return
       }
@@ -342,7 +287,13 @@ Module.register("EXT-GooglePhotos", {
         this.showBackgroundGooglePhotoAPI()
       }, 15000)
     } else {
-      //if (this.GPhotos.albums) this.Informations({message: "GPOpen" })
+      if (this.GPhotos.albums) {
+        this.sendNotification("EXT_ALERT", {
+          type: "information",
+          message: this.translate("GPOpen"),
+          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+        })
+      }
       clearTimeout(this.GPhotos.updateTimer)
       this.GPhotos.updateTimer = null
       this.updatePhotos()
@@ -351,37 +302,5 @@ Module.register("EXT-GooglePhotos", {
         this.updatePhotos()
       }, this.config.displayDelay)
     }
-  },
-
-  stopGooglePhotoAPI: function () {
-    //this.Informations({message: "GPClose" })
-    clearInterval(this.GPhotos.updateTimer)
-    this.GPhotos.updateTimer = null
-  },
-
-  showGooglePhotos: function() {
-    /*
-    if (!this.config.useGooglePhotosAPI) return this.Informations("warning", { message: "GPhotosNotActivated" })
-    if (this.config.displayType == "Background") return this.Informations("warning", { message: "GPhotosBckGrndActivated" })
-    if (this.config.displayType == "Module") return this.Informations("warning", { message: "GPhotosModuleActivated" })
-    if (this.config.displayType != "Recipe") return this.Informations("warning", { message: "GPhotosRecipeNotActivated" })
-    */
-    this.showGooglePhotoAPI()
-  },
-
-  showDisplay: function () {
-    var dom = document.getElementById("EXT_GPHOTO")
-    dom.classList.remove("hidden")
-    MM.getModules().exceptModule(this).enumerate((module)=> {
-      module.hide(100, {lockString: "EXT_LOCKED"})
-    })
-  },
-
-  hideDisplay: function () {
-    var dom = document.getElementById("EXT_GPHOTO")
-    dom.classList.add("hidden")
-    MM.getModules().exceptModule(this).enumerate((module)=> {
-      module.show(100, {lockString: "EXT_LOCKED"})
-    })
   }
 })

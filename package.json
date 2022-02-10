@@ -1,29 +1,30 @@
 {
-  "name": "MMM-Notification",
-  "version": "0.0.1",
-  "rev": "211202-1",
-  "description": "An embedded Notification Displayer on MagicMirror.",
-  "main": "MMM-Notification.js",
+  "name": "EXT-GooglePhotos",
+  "version": "1.0.0",
+  "rev": "220210",
+  "description": "An embedded Google Photos Displayer on MagicMirror.",
+  "main": "EXT-GooglePhotos.js",
   "scripts": {
     "preinstall": "installer/preinstall.sh",
-    "postinstall": "installer/postinstall.sh"
+    "postinstall": "installer/postinstall.sh",
+    "token": "node installer/auth_GPhotos.js"
   },
   "keywords": [
     "magic mirror",
     "module",
-    "notification",
-    "warning"
+    "google",
+    "photo"
   ],
   "author": "bugsounet",
   "license": "MIT",
   "bugs": {
-    "url": "http://forum.bugsounet.fr"
+    "url": "https://forum.bugsounet.fr"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bugsounet/MMM-Notification"
+    "url": "https://github.com/bugsounet/EXT-GooglePhotos"
   },
-  "homepage": "http://wiki.bugsounet.fr/en/MMM-Notification",
+  "homepage": "https://wiki.bugsounet.fr/en/EXT-GooglePhotos",
   "dependencies": {
     "@bugsounet/google-photos": "^1.0.1",
     "google-auth-library": "^7.0.4",
