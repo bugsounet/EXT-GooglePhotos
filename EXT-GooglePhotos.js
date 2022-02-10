@@ -10,7 +10,7 @@ logGP = (...args) => { /* do nothing */ }
 
 Module.register("EXT-GooglePhotos", {
   defaults: {
-    debug: true,
+    debug: false,
     displayType: 0,
     displayDelay: 10 * 1000,
     displayInfos: true,
@@ -24,9 +24,9 @@ Module.register("EXT-GooglePhotos", {
 
   start: function () {
     if (this.config.debug) logGP = (...args) => { console.log("[GPHOTOS]", ...args) }
-    var checked = false
-    if (typeof this.config.displayType === "number" && this.config.displayType >= 0 && this.config.displayType <= 1) checked = true
-    if (!checked) {
+    var checkConfig = false
+    if (typeof this.config.displayType === "number" && this.config.displayType >= 0 && this.config.displayType <= 1) checkConfig = true
+    if (!checkConfig) {
       this.config.displayType = 0
       console.error("GPhoto: displayType error --> correct with default")
     }
@@ -80,7 +80,6 @@ Module.register("EXT-GooglePhotos", {
       GPhotosInfo.id = "EXT_GPHOTO_INFO"
       GPhotosInfo.className= "Module"
       GPhotosInfo.innerHTML = "EXT-GooglePhotos Loading..."
-      if (!this.config.displayInfos) GPhotosInfo.classList.add("hidden")
 
       GPhotos.appendChild(GPhotosBack)
       GPhotos.appendChild(GPhotosCurrent)
@@ -239,6 +238,7 @@ Module.register("EXT-GooglePhotos", {
         return false
       })
       info.innerHTML = ""
+      if (!this.config.displayInfos) info.classList.add("hidden")
       var albumCover = document.createElement("div")
       albumCover.classList.add("albumCover")
       if (typeof album != 'undefined') { // @doctorfree patch
