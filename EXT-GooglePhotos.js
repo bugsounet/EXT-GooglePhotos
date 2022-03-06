@@ -19,7 +19,7 @@ Module.register("EXT-GooglePhotos", {
     hiResolution: true,
     timeFormat: "DD/MM/YYYY HH:mm",
     moduleHeight: 300,
-    moduleWidth: 300,
+    moduleWidth: 300
   },
 
   start: function () {
