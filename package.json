@@ -8,7 +8,7 @@
     "preinstall": "installer/preinstall.sh",
     "postinstall": "installer/postinstall.sh",
     "update": "installer/update.sh",
-    "token": "node installer/auth_GPhotos.js"
+    "token": "installer/token.sh"
   },
   "keywords": [
     "magic mirror",

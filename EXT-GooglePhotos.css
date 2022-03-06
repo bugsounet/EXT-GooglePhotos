@@ -119,6 +119,6 @@
   color:#FFF;
 }
 
-#EXT_GPHOTO_INFO .hidden {
+#EXT_GPHOTO_INFO.hidden {
   display:none;
 }

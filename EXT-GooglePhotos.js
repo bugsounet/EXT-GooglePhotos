@@ -97,8 +97,10 @@ Module.register("EXT-GooglePhotos", {
       case "DOM_OBJECTS_CREATED":
         this.prepare()
         this.sendSocketNotification("INIT", this.config)
+        setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 5000)
+        break
+      case "GAv4_READY":
         this.sendNotification("EXT_HELLO", this.name)
-        setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 10000)
         break
     }
   },
@@ -111,18 +113,21 @@ Module.register("EXT-GooglePhotos", {
           this.GPhotos.needMorePicsFlag = false
           this.GPhotos.scanned = payload
           this.GPhotos.index = 0
-          this.sendNotification("EXT_ALERT", {
-            type: "information",
-            message: this.translate("GPReceive", { VALUES: payload.length }),
-            icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png",
-            timer: 10000
-          })
+          if (this.config.debug) {
+            this.sendNotification("EXT_ALERT", {
+              type: "information",
+              message: this.translate("GPReceive", { VALUES: payload.length }),
+              icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png",
+              timer: 10000
+            })
+          }
           logGP("GPReceive", payload.length)
         }
         break
       case "GPhotos_INIT":
         this.GPhotos.albums = payload
         break
+      case "ERROR":
       case "GPError":
         this.sendNotification("EXT_ALERT", {
           type: "error",
@@ -221,7 +226,8 @@ Module.register("EXT-GooglePhotos", {
       console.error("[GPHOTOS] Failed to Load Image.")
       this.sendNotification("EXT_ALERT", {
         type: "warning",
-        message: this.translate("GPFailedOpenURL")
+        message: this.translate("GPFailedOpenURL"),
+        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
       })
       this.sendSocketNotification("GP_LOAD_FAIL", url)
     }
@@ -271,14 +277,16 @@ Module.register("EXT-GooglePhotos", {
       this.GPhotos.updateTimer = null
       this.sendNotification("EXT_ALERT", {
         type: "warning",
-        message: this.translate("GPNoPhotoFound")
+        message: this.translate("GPNoPhotoFound"),
+        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
       })
       this.sendSocketNotification("GP_MORE_PICTS")
       this.GPhotos.warning++
       if (this.GPhotos.warning >= 5) {
         this.sendNotification("EXT_ALERT", {
           type: "warning",
-          message: this.translate("GPError")
+          message: this.translate("GPError"),
+          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
         })
         this.GPhotos.warning = 0
         return
