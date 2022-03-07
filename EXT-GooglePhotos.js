@@ -8,8 +8,6 @@
 
 logGP = (...args) => { /* do nothing */ }
 
-/** Don't forget to publish new library ! **/'
-
 Module.register("EXT-GooglePhotos", {
   defaults: {
     debug: false,
