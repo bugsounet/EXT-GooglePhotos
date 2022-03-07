@@ -15,13 +15,25 @@ module.exports = NodeHelper.create({
   socketNotificationReceived: function (noti, payload) {
     switch (noti) {
       case "INIT":
-        console.log("[PHOTOS] EXT-GooglePhotos Version:", require('./package.json').version, "rev:", require('./package.json').rev)
+        console.log("[GPHOTOS] EXT-GooglePhotos Version:", require('./package.json').version, "rev:", require('./package.json').rev)
         this.initialize(payload)
       break
       /** GPhotos callbacks **/
       case "GP_MORE_PICTS":
       case "GP_LOAD_FAIL":
         if (this.photos) this.photos.prepAndSendChunk(Math.ceil(20*60*1000/this.config.displayDelay))
+        break
+      case "STOP_SCAN":
+        if (this.photos) {
+          console.log("[GPHOTOS] STOP!")
+          this.photos.stop()
+        }
+        break
+      case "START_SCAN":
+        if (this.photos) {
+          console.log("[GPHOTOS] Restart!")
+          this.photos.startScanning()
+        }
         break
     }
   },

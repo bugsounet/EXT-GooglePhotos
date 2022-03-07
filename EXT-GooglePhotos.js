@@ -8,6 +8,8 @@
 
 logGP = (...args) => { /* do nothing */ }
 
+/** Don't forget to publish new library ! **/'
+
 Module.register("EXT-GooglePhotos", {
   defaults: {
     debug: false,
@@ -32,6 +34,7 @@ Module.register("EXT-GooglePhotos", {
     }
     this.config.LoadingText= this.translate("LOADING")
     this.config.GPAlbumName= this.translate("GPAlbumName")
+    this.busy = false
     this.GPhotos= {
       updateTimer: null,
       albums: null,
@@ -101,6 +104,14 @@ Module.register("EXT-GooglePhotos", {
         break
       case "GAv4_READY":
         this.sendNotification("EXT_HELLO", this.name)
+        break
+      case "EXT_GOOGLEPHOTOS-STOP":
+        this.sendSocketNotification("STOP_SCAN")
+        this.busy= true
+        break
+      case "EXT_GOOGLEPHOTOS-START":
+        this.busy= false
+        this.sendSocketNotification("START_SCAN")
         break
     }
   },
@@ -199,7 +210,7 @@ Module.register("EXT-GooglePhotos", {
   /** GPhotos API **/
   updatePhotos: function () {
     if (this.GPhotos.scanned.length == 0) {
-      this.sendSocketNotification("GP_MORE_PICTS")
+      if (!this.busy) this.sendSocketNotification("GP_MORE_PICTS")
       return
     }
     if (this.GPhotos.index < 0) this.GPhotos.index = 0
@@ -216,7 +227,7 @@ Module.register("EXT-GooglePhotos", {
       this.GPhotos.needMorePicsFlag = true
     }
     if (this.GPhotos.needMorePicsFlag) {
-      this.sendSocketNotification("GP_MORE_PICTS")
+      if (!this.busy) this.sendSocketNotification("GP_MORE_PICTS")
     }
   },
 
@@ -224,12 +235,14 @@ Module.register("EXT-GooglePhotos", {
     var hidden = document.createElement("img")
     hidden.onerror = () => {
       console.error("[GPHOTOS] Failed to Load Image.")
-      this.sendNotification("EXT_ALERT", {
-        type: "warning",
-        message: this.translate("GPFailedOpenURL"),
-        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
-      })
-      this.sendSocketNotification("GP_LOAD_FAIL", url)
+      if (!this.busy) {
+        this.sendNotification("EXT_ALERT", {
+          type: "warning",
+          message: this.translate("GPFailedOpenURL"),
+          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+        })
+        this.sendSocketNotification("GP_LOAD_FAIL", url)
+      }
     }
     hidden.onload = () => {
       var back = document.getElementById("EXT_GPHOTO_BACK")
@@ -266,7 +279,7 @@ Module.register("EXT-GooglePhotos", {
       infoText.appendChild(photoTime)
       info.appendChild(infoText)
       logGP("Image loaded ["+ this.GPhotos.index + "/" + this.GPhotos.scanned.length + "]:", url)
-      this.sendSocketNotification("GP_LOADED", url)
+      if (!this.busy) this.sendSocketNotification("GP_LOADED", url)
     }
     hidden.src = url
   },
@@ -275,15 +288,17 @@ Module.register("EXT-GooglePhotos", {
     if (this.GPhotos.scanned.length == 0) {
       clearTimeout(this.GPhotos.updateTimer)
       this.GPhotos.updateTimer = null
-      this.sendNotification("EXT_ALERT", {
-        type: "warning",
-        message: this.translate("GPNoPhotoFound"),
-        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
-      })
-      this.sendSocketNotification("GP_MORE_PICTS")
+      if (!this.busy) {
+        this.sendNotification("EXT_ALERT", {
+          type: "warning",
+          message: this.translate("GPNoPhotoFound"),
+          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+        })
+        this.sendSocketNotification("GP_MORE_PICTS")
+      }
       this.GPhotos.warning++
       if (this.GPhotos.warning >= 5) {
-        this.sendNotification("EXT_ALERT", {
+        if (!this.busy) this.sendNotification("EXT_ALERT", {
           type: "warning",
           message: this.translate("GPError"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
