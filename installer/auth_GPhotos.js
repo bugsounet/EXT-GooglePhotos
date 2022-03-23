@@ -1,5 +1,5 @@
 'use strict'
-const GP = require("@bugsounet/google-photos")
+const GP = require("./lib/GooglePhotosLib.js")
 const fs = require("fs")
 const path = require('path')
 
