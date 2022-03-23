@@ -1,4 +1,5 @@
-# EXT-GooglePhotos - Extented for `MMM-GoogleAssistant` v4.x
+# EXT-GooglePhotos
+-- Extented for `MMM-GoogleAssistant` v4.x --
 
 EXT-GooglePhotos is a module for the [MagicMirror](https://github.com/MichMich/MagicMirror) project by [Michael Teeuw](https://github.com/MichMich).<br>
 
