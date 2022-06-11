@@ -14,6 +14,7 @@ Module.register("EXT-GooglePhotos", {
     displayType: 0,
     displayDelay: 10 * 1000,
     displayInfos: true,
+    displayBackground: true,
     albums: [],
     sort: "new", // "old", "random"
     hiResolution: true,
@@ -246,7 +247,7 @@ Module.register("EXT-GooglePhotos", {
       var back = document.getElementById("EXT_GPHOTO_BACK")
       var current = document.getElementById("EXT_GPHOTO_CURRENT")
       var dom = document.getElementById("EXT_GPHOTO")
-      back.style.backgroundImage = `url(${url})`
+      if (this.config.displayBackground) back.style.backgroundImage = `url(${url})`
       current.style.backgroundImage = `url(${url})`
       current.classList.add("animated")
       var info = document.getElementById("EXT_GPHOTO_INFO")
