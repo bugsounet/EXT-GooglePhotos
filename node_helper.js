@@ -35,6 +35,9 @@ module.exports = NodeHelper.create({
           this.photos.startScanning()
         }
         break
+      case "UPLOAD":
+        this.upload(payload)
+        break
     }
   },
 
@@ -65,5 +68,9 @@ module.exports = NodeHelper.create({
     this.config.CACHE = __dirname + "/tmp"
     this.photos = new GPhotos(this.config, this.config.debug, (noti, params) => this.sendSocketNotification(noti, params))
     this.photos.start()
+  },
+
+  upload: function(path) {
+    this.photos.prepareUpload(path)
   }
 })
