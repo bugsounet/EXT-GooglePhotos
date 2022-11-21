@@ -20,7 +20,8 @@ Module.register("EXT-GooglePhotos", {
     hiResolution: true,
     timeFormat: "DD/MM/YYYY HH:mm",
     moduleHeight: 300,
-    moduleWidth: 300
+    moduleWidth: 300,
+    uploadAlbum: null
   },
 
   start: function () {
@@ -112,6 +113,9 @@ Module.register("EXT-GooglePhotos", {
       case "EXT_GOOGLEPHOTOS-START":
         this.busy= false
         this.sendSocketNotification("START_SCAN")
+        break
+      case "EXT_GPHOTOPHOTOS-UPLOAD":
+        this.sendSocketNotification("UPLOAD", payload)
         break
     }
   },
