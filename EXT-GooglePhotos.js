@@ -103,7 +103,7 @@ Module.register("EXT-GooglePhotos", {
         this.sendSocketNotification("INIT", this.config)
         setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 5000)
         break
-      case "GAv4_READY":
+      case "GAv5_READY":
         this.sendNotification("EXT_HELLO", this.name)
         break
       case "EXT_GOOGLEPHOTOS-STOP":
