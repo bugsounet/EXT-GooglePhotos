@@ -5,7 +5,7 @@ var logGP = (...args) => { /* do nothing */ }
 
 const fs = require("fs")
 const path = require("path")
-const GPhotos = require("./lib/GooglePhotosLib.js")
+const GPhotos = require("./components/GooglePhotosLib.js")
 
 module.exports = NodeHelper.create({
   start: function () {

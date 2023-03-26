@@ -1,10 +1,12 @@
 /**
  ** Module : EXT-GooglePhotos
  ** @bugsounet
- ** ©02-2022
+ ** ©03-2023
  ** @eouia code based
  ** support: https://forum.bugsounet.fr
  **/
+
+/** Todo : create a displayer class **/
 
 logGP = (...args) => { /* do nothing */ }
 
@@ -35,6 +37,7 @@ Module.register("EXT-GooglePhotos", {
     this.config.LoadingText= this.translate("LOADING")
     this.config.GPAlbumName= this.translate("GPAlbumName")
     this.busy = false
+    this.ready = false
     this.GPhotos= {
       updateTimer: null,
       albums: null,
@@ -97,15 +100,18 @@ Module.register("EXT-GooglePhotos", {
   },
 
   notificationReceived: function(noti, payload) {
-    switch(noti) {
-      case "DOM_OBJECTS_CREATED":
+    if (noti == "GW_READY") {
+      if (sender.name == "Gateway") {
         this.prepare()
         this.sendSocketNotification("INIT", this.config)
         setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 5000)
-        break
-      case "GAv5_READY":
+        this.ready = true
         this.sendNotification("EXT_HELLO", this.name)
-        break
+      }
+    }
+    if (!this.ready) return
+
+    switch(noti) {
       case "EXT_GOOGLEPHOTOS-STOP":
         this.sendSocketNotification("STOP_SCAN")
         this.busy= true
