@@ -1,11 +1,9 @@
 # EXT-GooglePhotos
--- Extented for `MMM-GoogleAssistant` v5.x --
-
-EXT-GooglePhotos is a module for the [MagicMirror](https://github.com/MichMich/MagicMirror) project by [Michael Teeuw](https://github.com/MichMich).<br>
+-- Extented for `MMM-GoogleAssistant` --
 
 It allows to display photos from Google Photos album in fullscreen for `MagicMirror`
 
-This module is an Extented for `MMM-GoogleAssistant` v5.x, you can naturally use it as a simple module !<br>
+This module is an Extented plugin for `MMM-GoogleAssistant`<br>
 
 ## Installation / update / configuration
 
