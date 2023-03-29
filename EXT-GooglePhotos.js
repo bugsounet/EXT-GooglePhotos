@@ -37,7 +37,7 @@ Module.register("EXT-GooglePhotos", {
     this.config.LoadingText= this.translate("LOADING")
     this.config.GPAlbumName= this.translate("GPAlbumName")
     this.busy = false
-    this.ready = false
+    this.Ready = false
     this.GPhotos= {
       updateTimer: null,
       albums: null,
@@ -96,17 +96,17 @@ Module.register("EXT-GooglePhotos", {
     }
   },
 
-  notificationReceived: function(noti, payload) {
+  notificationReceived: function(noti, payload, sender) {
     if (noti == "GW_READY") {
       if (sender.name == "Gateway") {
         this.prepare()
         this.sendSocketNotification("INIT", this.config)
         setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 5000)
-        this.ready = true
+        this.Ready = true
         this.sendNotification("EXT_HELLO", this.name)
       }
     }
-    if (!this.ready) return
+    if (!this.Ready) return
 
     switch(noti) {
       case "EXT_GOOGLEPHOTOS-STOP":
