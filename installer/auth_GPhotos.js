@@ -1,15 +1,11 @@
 'use strict'
-const GP = require("../lib/GooglePhotosLib.js")
+const GP = require("../components/GooglePhotosLib.js")
 const fs = require("fs")
 const path = require('path')
 
 console.log("[GPHOTOS] Check credentials.json...")
-if (fs.existsSync(__dirname + "/../credentials.json")) {
-  this.CREDENTIALS = __dirname + "/../credentials.json"
-} else {
-  if(fs.existsSync(path.resolve(__dirname + "/../../MMM-GoogleAssistant/credentials.json"))) {
-   this.CREDENTIALS = path.resolve(__dirname + "/../../MMM-GoogleAssistant/credentials.json")
-  }
+if(fs.existsSync(path.resolve(__dirname + "/../../MMM-GoogleAssistant/credentials.json"))) {
+ this.CREDENTIALS = path.resolve(__dirname + "/../../MMM-GoogleAssistant/credentials.json")
 }
 if (!this.CREDENTIALS) return console.log("[GPHOTOS] credentials.json file not found !")
 else console.log("[GPHOTOS] credentials.json found in", this.CREDENTIALS)
