@@ -7,11 +7,10 @@
 
 const EventEmitter = require('events')
 const util = require('util')
-const opn = require('open')
 const readline = require('readline')
 const fs = require('fs')
 const path = require('path')
-const mkdirp = require('mkdirp')
+const {mkdirp} = require('mkdirp')
 const {OAuth2Client} = require('google-auth-library')
 const Axios = require('axios')
 const moment = require('moment')
@@ -58,11 +57,12 @@ function Auth(config, debug=false, error =()=>{}) {
         .then((tk)=>{
           tokens = tk.credentials
           var tp = path.resolve(__dirname, config.savedTokensPath)
-          mkdirp(path.dirname(tp), () => {
-            fs.writeFileSync(tp, JSON.stringify(tokens))
-            log("Token is refreshed.")
-            this.emit('ready', oauthClient)
-          })
+          mkdirp(path.dirname(tp))
+            .then(() => {
+              fs.writeFileSync(tp, JSON.stringify(tokens))
+              log("Token is refreshed.")
+              this.emit('ready', oauthClient)
+            })
         })
         .catch ((err) => { 
           console.error("[GPHOTOS:AUTH] Error:", err.message)
@@ -74,14 +74,15 @@ function Auth(config, debug=false, error =()=>{}) {
     }
   }
 
-  const getTokens = () => {
+  const getTokens = async () => {
+    const open = await loadOpen()
     const url = oauthClient.generateAuthUrl({
       access_type: 'offline',
       scope: [config.scope],
       prompt: 'consent'
     })
     log('Opening OAuth URL.\n\n' + url + '\n\nReturn here with your code.')
-    opn(url).catch(() => {
+    open(url).catch(() => {
       log('Failed to automatically open the URL. Copy/paste this in your browser:\n', url)
     })
     if (typeof config.tokenInput === 'function') {
@@ -733,5 +734,12 @@ class GPhotos {
     step()
   }
 }
+
+// import Open library and use default function only
+async function loadOpen() {
+  const loaded = await import('open');
+  return loaded.default;
+};
+
 
 module.exports = GPhotos
