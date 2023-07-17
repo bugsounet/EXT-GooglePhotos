@@ -1,7 +1,7 @@
 {
   "name": "EXT-GooglePhotos",
-  "version": "1.2.2",
-  "rev": "230708",
+  "version": "1.2.3",
+  "rev": "230717",
   "description": "An embedded Google Photos Displayer on MagicMirror.",
   "main": "EXT-GooglePhotos.js",
   "scripts": {
@@ -36,9 +36,9 @@
   "homepage": "https://wiki.bugsounet.fr/en/EXT-GooglePhotos",
   "dependencies": {
     "axios": "^1.4.0",
-    "glob": "^10.3.1",
+    "esbuild": "^0.18.13",
+    "glob": "^10.3.3",
     "google-auth-library": "^8.9.0",
-    "minify": "^9.2.0",
     "mkdirp": "^3.0.1",
     "open": "^9.1.0"
   }
