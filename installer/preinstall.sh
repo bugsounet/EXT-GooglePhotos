@@ -62,7 +62,3 @@ else
     Installer_success "OS Detected: $OSTYPE ($os_name $os_version $arch)"
   fi
 fi
-
-echo
-Installer_info "Installing all npm libraries..."
-
