@@ -36,7 +36,7 @@
   "homepage": "https://wiki.bugsounet.fr/en/EXT-GooglePhotos",
   "dependencies": {
     "axios": "^1.5.0",
-    "esbuild": "^0.18.19",
+    "esbuild": "^0.19.2",
     "glob": "^10.3.4",
     "google-auth-library": "^9.0.0",
     "mkdirp": "^3.0.1",
