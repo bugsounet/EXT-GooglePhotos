@@ -409,7 +409,7 @@ class GPhotos {
           console.error("[GPHOTOS]",e.toString())
         })
       } catch (error) {
-        console.error("[GPHOTOS]", error.toString())
+        console.error("[GPHOTOS]", error)
       }
     })
   }
