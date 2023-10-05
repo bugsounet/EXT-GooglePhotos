@@ -405,7 +405,6 @@ class GPhotos {
         if (params) config.params = params
         if (data) config.data = data
         Axios(config).then((ret)=>{
-          console.warn("[GPHOTOS] ret Details:", ret.data);
           resolve(ret)
         }).catch(error =>{
           console.error("[GPHOTOS]", error.toString())
