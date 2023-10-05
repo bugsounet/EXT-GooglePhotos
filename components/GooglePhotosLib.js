@@ -400,13 +400,19 @@ class GPhotos {
           headers: {
             Authorization: 'Bearer ' + token
           },
+          muteHttpExceptions: true
         }
         if (params) config.params = params
         if (data) config.data = data
         Axios(config).then((ret)=>{
+          console.warn("[GPHOTOS] ret Details:", ret.data);
           resolve(ret)
-        }).catch((e)=>{
-          console.error("[GPHOTOS]",e.toString())
+        }).catch(error =>{
+          console.error("[GPHOTOS]", error.toString())
+          console.error("[GPHOTOS] ----- Report ----- ")
+          console.error("[GPHOTOS] Axios config:", config)
+          console.error("[GPHOTOS] Details:", error.toJSON())
+          console.error("[GPHOTOS] ----- End of Report ----- ")
         })
       } catch (error) {
         console.error("[GPHOTOS]", error)
