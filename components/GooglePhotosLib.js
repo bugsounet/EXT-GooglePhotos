@@ -12,7 +12,6 @@ const fs = require('fs')
 const path = require('path')
 const {mkdirp} = require('mkdirp')
 const {OAuth2Client} = require('google-auth-library')
-const Axios = require('axios')
 const moment = require('moment')
 const https = require('https')
 
@@ -392,27 +391,26 @@ class GPhotos {
   request (token, endPoint="", method="get", params=null, data=null) {
     return new Promise((resolve)=>{
       try {
-        var url = endPoint
+        let baseURL = "https://photoslibrary.googleapis.com/v1/"
+        var url = baseURL + endPoint
         var config = {
           method: method,
-          url: url,
-          baseURL: 'https://photoslibrary.googleapis.com/v1/',
           headers: {
             Authorization: 'Bearer ' + token
-          },
-          muteHttpExceptions: true
+          }
         }
-        if (params) config.params = params
-        if (data) config.data = data
-        Axios(config).then((ret)=>{
-          resolve(ret)
-        }).catch(error =>{
-          console.error("[GPHOTOS]", error.toString())
-          console.error("[GPHOTOS] ----- Report ----- ")
-          console.error("[GPHOTOS] Axios config:", config)
-          console.error("[GPHOTOS] Details:", error.toJSON())
-          console.error("[GPHOTOS] ----- End of Report ----- ")
-        })
+        if (params) url = url + "/?" + params
+        if (data) config.body = JSON.stringify(data)
+        fetch(url,config)
+          .then(response => response.json())
+          .then(data => resolve(data))
+          .catch(error =>{
+            console.error("[GPHOTOS]", error.toString())
+            console.error("[GPHOTOS] ----- Report ----- ")
+            console.error("[GPHOTOS] Axios config:", config)
+            console.error("[GPHOTOS] Details:", error)
+            console.error("[GPHOTOS] ----- End of Report ----- ")
+          })
       } catch (error) {
         console.error("[GPHOTOS]", error)
       }
@@ -451,21 +449,21 @@ class GPhotos {
         var found = 0
         const getAlbum = async (pageSize=50, pageToken="") => {
           this.log("Getting Album info chunks.")
-          var params = {
+          var params = new URLSearchParams({
             pageSize: pageSize,
             pageToken: pageToken,
-          }
+          })
           try {
-            var response = await this.request(token, type, "get", params, null)
-            var body = response.data
-            if (body[type] && Array.isArray(body[type])) {
-              found += body[type].length
-              list = list.concat(body[type])
+            var data = await this.request(token, type, "get", params, null)
+
+            if (data[type] && Array.isArray(data[type])) {
+              found += data[type].length
+              list = list.concat(data[type])
             }
-            if (body.nextPageToken) {
+            if (data.nextPageToken) {
               const generous = async () => {
                 await sleep(500)
-                getAlbum(pageSize, body.nextPageToken)
+                getAlbum(pageSize, data.nextPageToken)
               }
               generous()
             } else {
@@ -495,8 +493,8 @@ class GPhotos {
               "pageToken": pageToken,
             }
             var response = await this.request(token, 'mediaItems:search', 'post', null, data)
-            if (response.data.hasOwnProperty("mediaItems") && Array.isArray(response.data.mediaItems)) {
-              for (var item of response.data.mediaItems) {
+            if (response.hasOwnProperty("mediaItems") && Array.isArray(response.mediaItems)) {
+              for (var item of response.mediaItems) {
                 if (list.length < maxNum) {
                   item._albumId = albumId
                   if (typeof isValid == "function") {
@@ -509,10 +507,10 @@ class GPhotos {
               if (list.length >= maxNum) {
                 resolve(list) // full with maxNum
               } else {
-                if (response.data.nextPageToken) {
+                if (response.nextPageToken) {
                   const generous = async () => {
                     await sleep(500)
-                    getImage(50, response.data.nextPageToken)
+                    getImage(50, response.nextPageToken)
                   }
                   generous()
                 } else {
@@ -545,10 +543,10 @@ class GPhotos {
         }
         const refr = async () => { 
           var response = await this.request(token, 'mediaItems:batchGet', 'get', params, null)
-          if (response.data.hasOwnProperty("mediaItemResults") && Array.isArray(response.data.mediaItemResults)) {
-            for (var i = 0; i< response.data.mediaItemResults.length; i++) {
-              if (response.data.mediaItemResults[i].hasOwnProperty("mediaItem")){
-                  items[i].baseUrl = response.data.mediaItemResults[i].mediaItem.baseUrl
+          if (response.hasOwnProperty("mediaItemResults") && Array.isArray(response.mediaItemResults)) {
+            for (var i = 0; i< response.mediaItemResults.length; i++) {
+              if (response.mediaItemResults[i].hasOwnProperty("mediaItem")){
+                  items[i].baseUrl = response.mediaItemResults[i].mediaItem.baseUrl
               }
             }
             resolve(items)

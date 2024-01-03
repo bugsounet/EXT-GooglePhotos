@@ -99,8 +99,8 @@ Module.register("EXT-GooglePhotos", {
   },
 
   notificationReceived: function(noti, payload, sender) {
-    if (noti == "GW_READY") {
-      if (sender.name == "Gateway") {
+    if (noti == "GA_READY") {
+      if (sender.name == "MMM-GoogleAssistant") {
         this.prepare()
         this.sendSocketNotification("INIT", this.config)
         setTimeout(() => { this.showBackgroundGooglePhotoAPI() }, 5000)
