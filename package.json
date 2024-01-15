@@ -37,7 +37,7 @@
   "dependencies": {
     "esbuild": "^0.19.11",
     "glob": "^10.3.10",
-    "google-auth-library": "^9.4.1",
+    "google-auth-library": "^9.4.2",
     "mkdirp": "^3.0.1",
     "open": "^10.0.3"
   }
