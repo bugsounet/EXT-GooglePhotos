@@ -44,7 +44,8 @@ Module.register("EXT-GooglePhotos", {
       scanned: [],
       index: 0,
       needMorePicsFlag: true,
-      warning: 0
+      warning: 0,
+      hidden: false
     }
   },
 
@@ -158,19 +159,36 @@ Module.register("EXT-GooglePhotos", {
   },
 
   resume: function() {
+    this.GPhotos.hidden = false
+    clearTimeout(this.GPhotos.updateTimer)
+    this.GPhotos.updateTimer = null
+    this.updatePhotos()
+
+    this.GPhotos.updateTimer = setInterval(()=>{
+        this.updatePhotos()
+    }, this.config.displayDelay)
+
     if (this.config.displayType == 0) {
       var GPhotos = document.getElementById("EXT_GPHOTO")
-      GPhotos.classList.remove("hidden")
-      logGP("GPhotos is resumed.")
+      if (GPhotos) GPhotos.classList.remove("hidden")
     }
+    console.log("EXT-GooglePhotos is resumed.")
   },
 
   suspend: function() {
+    this.GPhotos.hidden = true
+    clearTimeout(this.GPhotos.updateTimer)
+    this.GPhotos.updateTimer = null
     if (this.config.displayType == 0) {
       var GPhotos = document.getElementById("EXT_GPHOTO")
-      GPhotos.classList.add("hidden")
-      logGP("GPhotos is suspended.")
+      if (GPhotos) GPhotos.classList.add("hidden")
     }
+    console.log("EXT-GooglePhotos is suspended.")
+  },
+
+  forceHidden: function() {
+    var GPhotos = document.getElementById("EXT_GPHOTO")
+    GPhotos.classList.add("hidden")
   },
 
   prepare: function() {
@@ -241,6 +259,7 @@ Module.register("EXT-GooglePhotos", {
   },
 
   ready: function(url, target) {
+    if (this.config.displayType == 0 && this.GPhotos.hidden) this.forceHidden()
     var hidden = document.createElement("img")
     hidden.onerror = () => {
       console.error("[GPHOTOS] Failed to Load Image.")
