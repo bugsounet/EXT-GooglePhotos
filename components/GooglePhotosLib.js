@@ -14,6 +14,7 @@ const {mkdirp} = require('mkdirp')
 const {OAuth2Client} = require('google-auth-library')
 const moment = require('moment')
 const https = require('https')
+const Axios = require("axios")
 
 function sleep(ms=1000) {
   return new Promise((resolve) => {
@@ -187,15 +188,15 @@ class GPhotos {
       var needUpdateAlbumsList = false
       if (uploadAlbum) {
         if (uploadAlbum.hasOwnProperty("shareInfo") && uploadAlbum.isWriteable) {
-          this.log("Confirmed Uploadable album:", this.config.uploadAlbum, "(" + uploadAlbum.id + ")")
+          this.log(`Confirmed Uploadable album: ${this.config.uploadAlbum} (${uploadAlbum.id})`)
           this.uploadAlbumId = uploadAlbum.id
         } else {
-          this.log("This album is not uploadable:", this.config.uploadAlbum)
+          this.log(`This album is not uploadable: ${this.config.uploadAlbum}`)
           await this.createSharedAlbum(this.config.uploadAlbum)
           needUpdateAlbumsList = true
         }
       } else {
-        this.log("Can't find uploadable album :", this.config.uploadAlbum)
+        this.log(`Can't find uploadable album: ${this.config.uploadAlbum}`)
         await this.createSharedAlbum(this.config.uploadAlbum)
         needUpdateAlbumsList = true
       }
@@ -217,7 +218,7 @@ class GPhotos {
         this.albumsScan.push(matched)
       }
     }
-    this.log("Finish Album scanning. Properly scanned :", this.albumsScan.length)
+    this.log(`Finish Album scanning. Properly scanned: ${this.albumsScan.length}`)
     for (var a of this.albumsScan) {
       var url = a.coverPhotoBaseUrl + "=w160-h160-c"
       var fpath = path.resolve(this.path, "cache", a.id)
@@ -230,11 +231,11 @@ class GPhotos {
     this.sendSocketNotification("GPhotos_INIT", this.albumsScan)
     
     //load cached list - if available
-    fs.readFile(this.path +"/cache/photoListCache.json", 'utf-8', (err,data) => {
+    fs.readFile(`${this.path}/cache/photoListCache.json`, 'utf-8', (err,data) => {
       if (err) { this.log('unable to load cache', err) }
       else {
         this.localPhotoList = JSON.parse(data.toString())
-        this.log("successfully loaded cache of ", this.localPhotoList.length, " photos")
+        this.log(`successfully loaded cache of ${this.localPhotoList.length} photos`)
         this.prepAndSendChunk(5) //only 5 for extra fast startup
       }
     })
@@ -264,7 +265,7 @@ class GPhotos {
       //find which ones to refresh
       if (this.localPhotoPntr < 0 || this.localPhotoPntr >= this.localPhotoList.length ) {this.localPhotoPntr = 0}
       var numItemsToRefresh = Math.min(desiredChunk, this.localPhotoList.length - this.localPhotoPntr, 50) //50 is api limit
-      this.log("num to ref: ", numItemsToRefresh,", DesChunk: ", desiredChunk, ", totalLength: ", this.localPhotoList.length, ", Pntr: ", this.localPhotoPntr)
+      this.log(`num to ref: ${numItemsToRefresh} DesChunk: ${desiredChunk} totalLength: ${this.localPhotoList.length} Pntr: ${this.localPhotoPntr}`)
       
       
       // refresh them
@@ -282,11 +283,11 @@ class GPhotos {
         
         // update pointer
         this.localPhotoPntr = this.localPhotoPntr + list.length
-        this.log("refreshed: ", list.length, ", totalLength: ", this.localPhotoList.length,", Pntr: ", this.localPhotoPntr)
+        this.log(`refreshed: ${list.length} totalLength: ${this.localPhotoList.length} Pntr: ${this.localPhotoPntr}`)
       
-        this.log("just sent ", list.length, " more picts")
+        this.log(`just sent ${list.length} more picts`)
       } else {
-        this.log("couldn't send ", list.length, " picts")
+        this.log(`couldn't send ${list.length} picts`)
       }
      } catch (err) {
        this.log("failed to refresh and send chunk: ", err)
@@ -357,7 +358,7 @@ class GPhotos {
             }
             this.log(`Total indexed photos: ${photos.length}`)
             this.localPhotoList = photos
-            fs.writeFile(this.path +"/cache/photoListCache.json", JSON.stringify(this.localPhotoList, null, 4), (err) => {
+            fs.writeFile(`${this.path}/cache/photoListCache.json`, JSON.stringify(this.localPhotoList, null, 4), (err) => {
               if (err) {
                 console.error("[GPHOTOS]", err)
               } else { 
@@ -407,7 +408,7 @@ class GPhotos {
           .catch(error =>{
             console.error("[GPHOTOS]", error.toString())
             console.error("[GPHOTOS] ----- Report ----- ")
-            console.error("[GPHOTOS] Axios config:", config)
+            console.error("[GPHOTOS] fetch config:", config)
             console.error("[GPHOTOS] Details:", error)
             console.error("[GPHOTOS] ----- End of Report ----- ")
           })
@@ -485,7 +486,7 @@ class GPhotos {
         var token = client.credentials.access_token
         var list = []
         const getImage = async (pageSize=50, pageToken="") => {
-          this.log("Indexing photos now. total: ", list.length)
+          this.log(`Indexing photos now. total: ${list.length}`)
           try {
             var data = {
               "albumId": albumId,
@@ -534,7 +535,7 @@ class GPhotos {
       if (items.length <= 0) {resolve(items)}
       this.onAuthReady((client)=>{
         var token = client.credentials.access_token
-        this.log("received: ", items.length, " to refresh") //
+        this.log(`received: ${items.length} to refresh`)
         var list = []          
         var params = new URLSearchParams();
         var ii
@@ -568,7 +569,7 @@ class GPhotos {
                 title: albumName
               }
             })
-            resolve(created.data)
+            resolve(created)
           } catch(err) {
             this.log(".createAlbum() ", err.toString())
             this.log(err)
@@ -588,7 +589,7 @@ class GPhotos {
           try {
             var shareInfo = await this.request(
               token,
-              'albums/' + albumId + ":share",
+              `albums/${albumId}:share`,
               'post',
               null,
               {
@@ -598,7 +599,7 @@ class GPhotos {
                 }
               }
             )
-            resolve(shareInfo.data)
+            resolve(shareInfo)
           } catch(err) {
             this.log(".shareAlbum()", err.toString())
             this.log(err)
@@ -611,6 +612,8 @@ class GPhotos {
   }
 
   upload(path) {
+    // to code with native fetch
+    // not possible actually or ... not find how
     return new Promise((resolve)=>{
       this.onAuthReady((client)=>{
         var token = client.credentials.access_token
@@ -676,7 +679,7 @@ class GPhotos {
                 }
               }
             )
-            resolve(result.data)
+            resolve(result)
           } catch(err) {
             this.log(".create() ", err.toString())
             this.log(err)
@@ -696,18 +699,18 @@ class GPhotos {
         return false
       })
       if (matched) {
-        console.error("[GPHOTOS] Album", album, "is already existing.")
+        console.warn(`[GPHOTOS] Album ${album} is already existing.`)
       } else {
-        console.log("[GPHOTOS] Album", album, "will be created.")
+        console.log(`[GPHOTOS] Album ${album} will be created.`)
         var r = await this.createAlbum(album)
         var s = await this.shareAlbum(r.id)
-        console.log("[GPHOTOS] Album", album, "is created.")
+        console.log(`[GPHOTOS] Album ${album} is created.`)
         /** rescan again **/
         albums = await this.getAlbums()
         albums.find((a)=>{
           if (a.title == album) {
             this.uploadAlbumId = a.id
-            console.log("[GPHOTOS] Configuration Updated", this.uploadAlbumId)
+            console.log(`[GPHOTOS] Configuration Updated, uploadAlbumId= ${this.uploadAlbumId}`)
             return true
           }
           return false
@@ -728,7 +731,7 @@ class GPhotos {
       var uploadToken = await this.upload(path)
       if (uploadToken) {
         var result = await this.create(uploadToken, this.uploadAlbumId)
-        console.log("[GPHOTOS] Upload completed. ["+path+"]")
+        console.log(`[GPHOTOS] Upload completed. [${path}]`)
       } else {
         console.error("[GPHOTOS] Upload Fails.")
         this.sendSocketNotification("ERROR", "Upload Fails.")
@@ -743,6 +746,5 @@ async function loadOpen() {
   const loaded = await import('open');
   return loaded.default;
 };
-
 
 module.exports = GPhotos
