@@ -38,7 +38,7 @@
     "axios": "^1.6.7",
     "esbuild": "^0.20.0",
     "glob": "^10.3.10",
-    "google-auth-library": "^9.6.2",
+    "google-auth-library": "^9.6.3",
     "mkdirp": "^3.0.1",
     "open": "^10.0.3"
   }
