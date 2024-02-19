@@ -202,6 +202,7 @@ Module.register("EXT-GooglePhotos", {
     if (this.config.displayType == 0) {
       var nodes = document.getElementsByClassName("region fullscreen below")
       var pos = nodes[0].querySelector(".container")
+      pos.style.display = "block"
       var children = pos.children
       var module = document.createElement("div")
       module.id = "module_Fake_EXT_GPHOTO"
