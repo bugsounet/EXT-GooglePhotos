@@ -47,6 +47,7 @@ Module.register("EXT-GooglePhotos", {
       warning: 0,
       hidden: false
     };
+    this.fadeTimeout = null;
   },
 
   getTranslations () {
@@ -74,8 +75,8 @@ Module.register("EXT-GooglePhotos", {
     if (this.config.displayType === 1) {
       var GPhotos = document.createElement("div");
       GPhotos.id = "EXT_GPHOTO";
-      GPhotos.style.height= `${this.config.moduleHeight  }px`;
-      GPhotos.style.width= `${this.config.moduleWidth  }px`;
+      GPhotos.style.height= `${this.config.moduleHeight}px`;
+      GPhotos.style.width= `${this.config.moduleWidth}px`;
       var GPhotosBack = document.createElement("div");
       GPhotosBack.id = "EXT_GPHOTO_BACK";
       var GPhotosCurrent = document.createElement("div");
@@ -159,11 +160,10 @@ Module.register("EXT-GooglePhotos", {
   },
 
   resume () {
-    this.GPhotos.hidden = false;
     clearTimeout(this.GPhotos.updateTimer);
-    this.GPhotos.updateTimer = null;
-    this.updatePhotos();
+    this.GPhotos.hidden = false;
 
+    this.updatePhotos();
     this.GPhotos.updateTimer = setInterval(()=>{
       this.updatePhotos();
     }, this.config.displayDelay);
@@ -176,9 +176,8 @@ Module.register("EXT-GooglePhotos", {
   },
 
   suspend () {
-    this.GPhotos.hidden = true;
     clearTimeout(this.GPhotos.updateTimer);
-    this.GPhotos.updateTimer = null;
+    this.GPhotos.hidden = true;
     if (this.config.displayType === 0) {
       var GPhotos = document.getElementById("EXT_GPHOTO");
       if (GPhotos) GPhotos.classList.add("hidden");
@@ -261,6 +260,7 @@ Module.register("EXT-GooglePhotos", {
 
   ready (url, target) {
     if (this.config.displayType === 0 && this.GPhotos.hidden) this.forceHidden();
+    clearTimeout(this.fadeTimeout);
     var hidden = document.createElement("img");
     hidden.onerror = () => {
       console.error("[GPHOTOS] Failed to Load Image.");
@@ -279,7 +279,8 @@ Module.register("EXT-GooglePhotos", {
       var dom = document.getElementById("EXT_GPHOTO");
       if (this.config.displayBackground) back.style.backgroundImage = `url(${url})`;
       current.style.backgroundImage = `url(${url})`;
-      current.classList.add("animated");
+      removeAnimateCSS("EXT_GPHOTO", this.data.animateOut ? this.data.animateOut: "fadeOut");
+      addAnimateCSS("EXT_GPHOTO", this.data.animateIn ? this.data.animateIn: "fadeIn", 2);
       var info = document.getElementById("EXT_GPHOTO_INFO");
       var album = this.GPhotos.albums.find((a)=>{
         if (a.id === target._albumId) return true;
@@ -311,6 +312,10 @@ Module.register("EXT-GooglePhotos", {
       if (!this.busy) this.sendSocketNotification("GP_LOADED", url);
     };
     hidden.src = url;
+    this.fadeTimeout = setTimeout(() => {
+      removeAnimateCSS("EXT_GPHOTO", this.data.animateIn ? this.data.animateIn: "fadeIn");
+      addAnimateCSS("EXT_GPHOTO", this.data.animateOut ? this.data.animateOut: "fadeOut",2);
+    }, this.config.displayDelay - 2200);
   },
 
   showBackgroundGooglePhotoAPI () {
