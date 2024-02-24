@@ -14,11 +14,6 @@
   --right: 0;
 }
 
-@keyframes trans {
-  from {opacity: 0}
-  to {opacity: 1}
-}
-
 .region.fullscreen #EXT_GPHOTO {
   position:absolute;
   top:0;
@@ -57,11 +52,6 @@
   left:10px;
   right:10px;
   bottom:10px;
-}
-
-#EXT_GPHOTO_CURRENT.animated {
-  animation-name: trans;
-  animation-duration: 2s;
 }
 
 #EXT_GPHOTO_BACK {
