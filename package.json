@@ -45,7 +45,7 @@
     "glob": "^10.3.10",
     "google-auth-library": "^9.6.3",
     "mkdirp": "^3.0.1",
-    "open": "^10.0.4"
+    "open": "^10.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",
