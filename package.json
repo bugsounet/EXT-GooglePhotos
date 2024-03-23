@@ -1,7 +1,7 @@
 {
   "name": "EXT-GooglePhotos",
-  "version": "1.4.1",
-  "rev": "240303",
+  "version": "1.4.2",
+  "rev": "240323",
   "description": "An embedded Google Photos Displayer on MagicMirror.",
   "main": "EXT-GooglePhotos.js",
   "scripts": {
