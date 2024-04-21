@@ -1,7 +1,7 @@
 {
   "name": "EXT-GooglePhotos",
-  "version": "1.4.2",
-  "rev": "240323",
+  "version": "1.4.3",
+  "rev": "240421",
   "description": "An embedded Google Photos Displayer on MagicMirror.",
   "main": "EXT-GooglePhotos.js",
   "scripts": {
@@ -42,14 +42,14 @@
   "dependencies": {
     "axios": "^1.6.8",
     "esbuild": "^0.20.2",
-    "glob": "^10.3.10",
-    "google-auth-library": "^9.7.0",
+    "glob": "^10.3.12",
+    "google-auth-library": "^9.8.0",
     "mkdirp": "^3.0.1",
     "open": "^10.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",
-    "@stylistic/eslint-plugin": "^1.7.0",
+    "@stylistic/eslint-plugin": "^1.7.2",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1"
   }
