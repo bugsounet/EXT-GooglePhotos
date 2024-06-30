@@ -1,12 +1,12 @@
 {
   "name": "EXT-GooglePhotos",
-  "version": "1.4.4",
-  "rev": "240528",
+  "version": "1.5.0",
+  "rev": "240701",
   "description": "An embedded Google Photos Displayer on MagicMirror.",
   "main": "EXT-GooglePhotos.js",
   "scripts": {
     "preinstall": "installer/preinstall.sh",
-    "postinstall": "installer/postinstall.sh -m -b",
+    "postinstall": "installer/postinstall.sh -m",
     "update": "installer/update.sh",
     "token": "installer/token.sh",
     "reset": "git reset --hard",
@@ -17,7 +17,7 @@
     "test:minify": "cd installer && node minify.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "keywords": [
     "MMM-GoogleAssistant",
@@ -32,7 +32,7 @@
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://forum.bugsounet.fr"
+    "url": "https://github.com/bugsounet/EXT-GooglePhotos/issues"
   },
   "repository": {
     "type": "git",
