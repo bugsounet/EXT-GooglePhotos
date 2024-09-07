@@ -40,7 +40,7 @@
   },
   "homepage": "https://wiki.bugsounet.fr/en/EXT-GooglePhotos",
   "dependencies": {
-    "axios": "^1.7.5",
+    "axios": "^1.7.7",
     "esbuild": "^0.23.1",
     "glob": "^11.0.0",
     "google-auth-library": "^9.14.0",
