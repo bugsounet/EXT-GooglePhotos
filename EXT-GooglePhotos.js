@@ -124,6 +124,9 @@ Module.register("EXT-GooglePhotos", {
       case "EXT_GPHOTOPHOTOS-UPLOAD":
         this.sendSocketNotification("UPLOAD", payload);
         break;
+      case "EXT_GOOGLEPHOTOS-NEXT":
+        this.updatePhotos();
+        break;
     }
   },
 
