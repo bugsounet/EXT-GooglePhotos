@@ -4,5 +4,7 @@
   "GPAlbumName": "Album:",
   "GPError": "GooglePhotos: Aucune photos a afficher",
   "GPNoPhotoFound" : "GooglePhotos: Aucune photos trouvé",
-  "GPReceive": "GooglePhotos a reçu {VALUES} photos"
+  "GPReceive": "GooglePhotos a reçu {VALUES} photos",
+  "GPPaused": "GooglePhotos en pause",
+  "GPUnpaused": "GooglePhotos diaporama redémarré"
 }

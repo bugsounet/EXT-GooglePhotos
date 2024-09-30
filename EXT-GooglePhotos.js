@@ -23,7 +23,8 @@ Module.register("EXT-GooglePhotos", {
     timeFormat: "DD/MM/YYYY HH:mm",
     moduleHeight: 300,
     moduleWidth: 300,
-    uploadAlbum: null
+    uploadAlbum: null,
+    suspendWhenScreenOff: true  // shall EXT-GooglePhotos suspend when EXT_Screen turn off the screen ?
   },
 
   start () {
@@ -146,6 +147,15 @@ Module.register("EXT-GooglePhotos", {
         break;
       case "EXT_GPHOTOPHOTOS-PAUSE":  // pause or un-pause updatePhotos
         this.pause();
+        break;
+      case "EXT_SCREEN-POWER":
+        if (this.config.suspendWhenScreenOff) {
+          if (payload === true) {
+            this.resume();
+          } else {
+            this.suspend();
+          }
+        }
         break;
     }
   },
