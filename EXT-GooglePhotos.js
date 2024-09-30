@@ -48,6 +48,8 @@ Module.register("EXT-GooglePhotos", {
       hidden: false
     };
     this.fadeTimeout = null;
+    this.photo_url = null
+    this.previous_photo_url = null
   },
 
   getTranslations () {
@@ -127,6 +129,16 @@ Module.register("EXT-GooglePhotos", {
       case "EXT_GOOGLEPHOTOS-NEXT":
         clearTimeout(this.GPhotos.updateTimer); // stop timer
         this.updatePhotos(); // change photo
+        this.GPhotos.updateTimer = setInterval(()=>{ // restart a reseted timer
+          this.updatePhotos();
+        }, this.config.displayDelay);
+        break;
+      case "EXT_GOOGLEPHOTOS-PREVIOUS":
+        clearTimeout(this.GPhotos.updateTimer); // stop timer
+        url = this.previous_photo_url
+        this.ready(url, target);  // this will show photo of this url, photo infos...
+        // this.GPhotos.index is not modified, so next photo should be unchanged : the one we have seen before 
+        // sending EXT_GOOGLEPHOTOS-PREVIOUS
         this.GPhotos.updateTimer = setInterval(()=>{ // restart a reseted timer
           this.updatePhotos();
         }, this.config.displayDelay);
@@ -243,6 +255,8 @@ Module.register("EXT-GooglePhotos", {
 
   /** GPhotos API **/
   updatePhotos () {
+    // save previous photo url
+    this.previous_photo_url = this.photo_url
     if (this.GPhotos.scanned.length === 0) {
       if (!this.busy) this.sendSocketNotification("GP_MORE_PICTS");
       return;
@@ -255,6 +269,7 @@ Module.register("EXT-GooglePhotos", {
     }
     else var url = target.baseUrl;
     this.ready(url, target);
+    this.photo_url = url
     this.GPhotos.index++;
     if (this.GPhotos.index >= this.GPhotos.scanned.length) {
       this.GPhotos.index = 0;
