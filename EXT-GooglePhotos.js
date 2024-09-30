@@ -157,6 +157,15 @@ Module.register("EXT-GooglePhotos", {
           }
         }
         break;
+      case "EXT_GOOGLEPHOTOS-SIGNAL_PHOTO":
+        console.log("EXT-GooglePhotos photo inintéressante " + this.photo_url);
+        this.sendNotification("EXT_ALERT", {
+          type: "warning",
+          message: "photo inintéressante " + this.photo_url,
+          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+        });
+        // todo envoyer un msg qq part ?
+        break;
     }
   },
 
@@ -420,14 +429,5 @@ Module.register("EXT-GooglePhotos", {
       });
       this.paused = false
     }
-  },
-
-  suspend () {
-    this.GPhotos.hidden = true;
-    if (this.config.displayType === 0) {
-      var GPhotos = document.getElementById("EXT_GPHOTO");
-      if (GPhotos) GPhotos.classList.add("hidden");
-    }
   }
-
 });
