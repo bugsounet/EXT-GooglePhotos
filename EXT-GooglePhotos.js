@@ -50,6 +50,7 @@ Module.register("EXT-GooglePhotos", {
     this.fadeTimeout = null;
     this.photo_url = null
     this.previous_photo_url = null
+    this.paused = false // true : photo are shown, but no updatePhotos() each displayDelay
   },
 
   getTranslations () {
@@ -142,6 +143,9 @@ Module.register("EXT-GooglePhotos", {
         this.GPhotos.updateTimer = setInterval(()=>{ // restart a reseted timer
           this.updatePhotos();
         }, this.config.displayDelay);
+        break;
+      case "EXT_GPHOTOPHOTOS-PAUSE":  // pause or un-pause updatePhotos
+        this.pause();
         break;
     }
   },
@@ -381,5 +385,39 @@ Module.register("EXT-GooglePhotos", {
         this.updatePhotos();
       }, this.config.displayDelay);
     }
+  },
+
+  pause () {
+    if (this.paused == false) {
+      clearTimeout(this.GPhotos.updateTimer);
+      console.log("EXT-GooglePhotos is paused.");
+      this.sendNotification("EXT_ALERT", {
+        type: "information",
+        message: this.translate("GPPaused"),
+        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+      });
+    this.paused = true
+    } else {
+      this.updatePhotos();
+      this.GPhotos.updateTimer = setInterval(()=>{
+        this.updatePhotos();
+      }, this.config.displayDelay);
+      console.log("EXT-GooglePhotos is not paused anymore.");
+      this.sendNotification("EXT_ALERT", {
+        type: "information",
+        message: this.translate("GPUnpaused"),
+        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+      });
+      this.paused = false
+    }
+  },
+
+  suspend () {
+    this.GPhotos.hidden = true;
+    if (this.config.displayType === 0) {
+      var GPhotos = document.getElementById("EXT_GPHOTO");
+      if (GPhotos) GPhotos.classList.add("hidden");
+    }
   }
+
 });
