@@ -125,7 +125,11 @@ Module.register("EXT-GooglePhotos", {
         this.sendSocketNotification("UPLOAD", payload);
         break;
       case "EXT_GOOGLEPHOTOS-NEXT":
-        this.updatePhotos();
+        clearTimeout(this.GPhotos.updateTimer); // stop timer
+        this.updatePhotos(); // change photo
+        this.GPhotos.updateTimer = setInterval(()=>{ // restart a reseted timer
+          this.updatePhotos();
+        }, this.config.displayDelay);
         break;
     }
   },
