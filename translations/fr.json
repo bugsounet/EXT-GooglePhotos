@@ -5,6 +5,5 @@
   "GPError": "GooglePhotos: Aucune photos a afficher",
   "GPNoPhotoFound" : "GooglePhotos: Aucune photos trouvé",
   "GPReceive": "GooglePhotos a reçu {VALUES} photos",
-  "GPPaused": "GooglePhotos en pause",
-  "GPUnpaused": "GooglePhotos diaporama redémarré"
+  "GPUninterestingPhoto": "Photo {NAME} signalée comme non intéressante"
 }

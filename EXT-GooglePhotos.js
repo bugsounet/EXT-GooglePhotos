@@ -24,7 +24,9 @@ Module.register("EXT-GooglePhotos", {
     moduleHeight: 300,
     moduleWidth: 300,
     uploadAlbum: null,
-    suspendWhenScreenOff: true  // shall EXT-GooglePhotos suspend when EXT_Screen turn off the screen ?
+    suspendWhenScreenOff: true,  // shall EXT-GooglePhotos suspend when EXT_Screen turn off the screen ?
+    time_extender: 10, // how many times multiply displayDelay when EXT_GOOGLEPHOTOS-MORE_TIME
+    photoSignalUrl: null  // where to send photo's url when signalled as not interesting  
   },
 
   start () {
@@ -49,9 +51,6 @@ Module.register("EXT-GooglePhotos", {
       hidden: false
     };
     this.fadeTimeout = null;
-    this.photo_url = null
-    this.previous_photo_url = null
-    this.paused = false // true : photo are shown, but no updatePhotos() each displayDelay
   },
 
   getTranslations () {
@@ -129,28 +128,43 @@ Module.register("EXT-GooglePhotos", {
         this.sendSocketNotification("UPLOAD", payload);
         break;
       case "EXT_GOOGLEPHOTOS-NEXT":
-        clearTimeout(this.GPhotos.updateTimer); // stop timer
-        this.updatePhotos(); // change photo
-        this.GPhotos.updateTimer = setInterval(()=>{ // restart a reseted timer
+        // stop timer
+        clearTimeout(this.GPhotos.updateTimer); 
+        // change photo
+        this.updatePhotos();
+        // restart timer
+        this.GPhotos.updateTimer = setInterval(()=>{
           this.updatePhotos();
         }, this.config.displayDelay);
         break;
       case "EXT_GOOGLEPHOTOS-PREVIOUS":
-        clearTimeout(this.GPhotos.updateTimer); // stop timer
-        url = this.previous_photo_url
-        this.ready(url, target);  // this will show photo of this url, photo infos...
-        // this.GPhotos.index is not modified, so next photo should be unchanged : the one we have seen before 
-        // sending EXT_GOOGLEPHOTOS-PREVIOUS
-        this.GPhotos.updateTimer = setInterval(()=>{ // restart a reseted timer
+        // return to index of photo before current
+        this.GPhotos.index -= 2;
+        // stop timer
+        clearTimeout(this.GPhotos.updateTimer); 
+        // change photo to the one before current
+        this.updatePhotos();
+        // restart timer
+        this.GPhotos.updateTimer = setInterval(()=>{ 
           this.updatePhotos();
         }, this.config.displayDelay);
         break;
-      case "EXT_GPHOTOPHOTOS-PAUSE":  // pause or un-pause updatePhotos
-        this.pause();
+      case "EXT_GOOGLEPHOTOS-MORE_TIME":  // shows photo longer
+        // stop timers
+        clearTimeout(this.GPhotos.updateTimer);
+        clearTimeout(this.fadeTimeout);
+        // restart longer timers
+        this.fadeTimeout = setTimeout(() => {
+          removeAnimateCSS("EXT_GPHOTO", this.data.animateIn ? this.data.animateIn: "fadeIn");
+          addAnimateCSS("EXT_GPHOTO", this.data.animateOut ? this.data.animateOut: "fadeOut",2);
+        }, this.config.displayDelay * this.config.time_extender - 2200);
+        this.GPhotos.updateTimer = setInterval(()=>{ 
+          this.updatePhotos();
+        }, this.config.displayDelay * this.config.time_extender);
         break;
       case "EXT_SCREEN-POWER":
         if (this.config.suspendWhenScreenOff) {
-          if (payload === true) {
+          if (payload == true) {
             this.resume();
           } else {
             this.suspend();
@@ -158,13 +172,34 @@ Module.register("EXT-GooglePhotos", {
         }
         break;
       case "EXT_GOOGLEPHOTOS-SIGNAL_PHOTO":
-        console.log("EXT-GooglePhotos photo inintéressante " + this.photo_url);
-        this.sendNotification("EXT_ALERT", {
-          type: "warning",
-          message: "photo inintéressante " + this.photo_url,
-          icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
-        });
-        // todo envoyer un msg qq part ?
+        if (this.config.photoSignalUrl) {
+          current_displayed_photo_index = this.GPhotos.index - 1
+          if (current_displayed_photo_index >= 0) {
+            photoName= this.GPhotos.scanned[current_displayed_photo_index].filename
+            this.sendNotification("EXT_ALERT", {
+              type: "warning",
+              message: this.translate("GPUninterestingPhoto", { NAME: photoName }),
+              icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+            });
+            const formData = new FormData();
+            formData.append('photoUrl', this.GPhotos.scanned[current_displayed_photo_index].productUrl);
+            formData.append('albumId', this.GPhotos.scanned[current_displayed_photo_index]._albumId);
+            formData.append('filename', photoName);
+            formData.append('creationTime', JSON.stringify(this.GPhotos.scanned[current_displayed_photo_index].mediaMetadata.creationTime));
+
+            fetch(this.config.photoSignalUrl, {
+            method: 'POST',
+            body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+            console.log('Success:', data);
+            })
+            .catch((error) => {
+            console.error('Error:', error);
+            });
+          } 
+        } 
         break;
     }
   },
@@ -278,8 +313,6 @@ Module.register("EXT-GooglePhotos", {
 
   /** GPhotos API **/
   updatePhotos () {
-    // save previous photo url
-    this.previous_photo_url = this.photo_url
     if (this.GPhotos.scanned.length === 0) {
       if (!this.busy) this.sendSocketNotification("GP_MORE_PICTS");
       return;
@@ -291,8 +324,7 @@ Module.register("EXT-GooglePhotos", {
       var url = `${target.baseUrl  }=w1080-h1920`;
     }
     else var url = target.baseUrl;
-    this.ready(url, target);
-    this.photo_url = url
+        this.ready(url, target);
     this.GPhotos.index++;
     if (this.GPhotos.index >= this.GPhotos.scanned.length) {
       this.GPhotos.index = 0;
@@ -403,31 +435,6 @@ Module.register("EXT-GooglePhotos", {
       this.GPhotos.updateTimer = setInterval(()=>{
         this.updatePhotos();
       }, this.config.displayDelay);
-    }
-  },
-
-  pause () {
-    if (this.paused == false) {
-      clearTimeout(this.GPhotos.updateTimer);
-      console.log("EXT-GooglePhotos is paused.");
-      this.sendNotification("EXT_ALERT", {
-        type: "information",
-        message: this.translate("GPPaused"),
-        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
-      });
-    this.paused = true
-    } else {
-      this.updatePhotos();
-      this.GPhotos.updateTimer = setInterval(()=>{
-        this.updatePhotos();
-      }, this.config.displayDelay);
-      console.log("EXT-GooglePhotos is not paused anymore.");
-      this.sendNotification("EXT_ALERT", {
-        type: "information",
-        message: this.translate("GPUnpaused"),
-        icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
-      });
-      this.paused = false
     }
   }
 });
