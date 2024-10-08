@@ -164,7 +164,7 @@ Module.register("EXT-GooglePhotos", {
         break;
       case "EXT_SCREEN-POWER":
         if (this.config.suspendWhenScreenOff) {
-          if (payload == true) {
+          if (payload === true) {
             this.resume();
           } else {
             this.suspend();
@@ -173,31 +173,31 @@ Module.register("EXT-GooglePhotos", {
         break;
       case "EXT_GOOGLEPHOTOS-SIGNAL_PHOTO":
         if (this.config.photoSignalUrl) {
-          current_displayed_photo_index = this.GPhotos.index - 1
+          current_displayed_photo_index = this.GPhotos.index - 1;
           if (current_displayed_photo_index >= 0) {
-            photoName= this.GPhotos.scanned[current_displayed_photo_index].filename
+            photoName= this.GPhotos.scanned[current_displayed_photo_index].filename;
             this.sendNotification("EXT_ALERT", {
               type: "warning",
               message: this.translate("GPUninterestingPhoto", { NAME: photoName }),
               icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
             });
             const formData = new FormData();
-            formData.append('photoUrl', this.GPhotos.scanned[current_displayed_photo_index].productUrl);
-            formData.append('albumId', this.GPhotos.scanned[current_displayed_photo_index]._albumId);
-            formData.append('filename', photoName);
-            formData.append('creationTime', JSON.stringify(this.GPhotos.scanned[current_displayed_photo_index].mediaMetadata.creationTime));
+            formData.append("photoUrl", this.GPhotos.scanned[current_displayed_photo_index].productUrl);
+            formData.append("albumId", this.GPhotos.scanned[current_displayed_photo_index]._albumId);
+            formData.append("filename", photoName);
+            formData.append("creationTime", JSON.stringify(this.GPhotos.scanned[current_displayed_photo_index].mediaMetadata.creationTime));
 
             fetch(this.config.photoSignalUrl, {
-            method: 'POST',
-            body: formData
+              method: "POST",
+              body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-            console.log('Success:', data);
-            })
-            .catch((error) => {
-            console.error('Error:', error);
-            });
+              .then((response) => response.json())
+              .then((data) => {
+                console.log("Success:", data);
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
           } 
         } 
         break;
@@ -324,7 +324,7 @@ Module.register("EXT-GooglePhotos", {
       var url = `${target.baseUrl  }=w1080-h1920`;
     }
     else var url = target.baseUrl;
-        this.ready(url, target);
+    this.ready(url, target);
     this.GPhotos.index++;
     if (this.GPhotos.index >= this.GPhotos.scanned.length) {
       this.GPhotos.index = 0;
