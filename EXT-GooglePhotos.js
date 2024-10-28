@@ -176,7 +176,7 @@ Module.register("EXT-GooglePhotos", {
           current_displayed_photo_index = this.GPhotos.index - 1;
           if (current_displayed_photo_index >= 0) {
             photoName= this.GPhotos.scanned[current_displayed_photo_index].filename;
-            this.sendNotification("EXT_ALERT", {
+            this.sendNotification("GA_ALERT", {
               type: "warning",
               message: this.translate("GPUninterestingPhoto", { NAME: photoName }),
               icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -213,7 +213,7 @@ Module.register("EXT-GooglePhotos", {
           this.GPhotos.scanned = payload;
           this.GPhotos.index = 0;
           if (this.config.debug) {
-            this.sendNotification("EXT_ALERT", {
+            this.sendNotification("GA_ALERT", {
               type: "information",
               message: this.translate("GPReceive", { VALUES: payload.length }),
               icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png",
@@ -228,7 +228,7 @@ Module.register("EXT-GooglePhotos", {
         break;
       case "ERROR":
       case "GPError":
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "error",
           message: payload,
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -342,7 +342,7 @@ Module.register("EXT-GooglePhotos", {
     hidden.onerror = () => {
       console.error("[GPHOTOS] Failed to Load Image.");
       if (!this.busy) {
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "warning",
           message: this.translate("GPFailedOpenURL"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -400,7 +400,7 @@ Module.register("EXT-GooglePhotos", {
       clearTimeout(this.GPhotos.updateTimer);
       this.GPhotos.updateTimer = null;
       if (!this.busy) {
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "warning",
           message: this.translate("GPNoPhotoFound"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -409,7 +409,7 @@ Module.register("EXT-GooglePhotos", {
       }
       this.GPhotos.warning++;
       if (this.GPhotos.warning >= 5) {
-        if (!this.busy) this.sendNotification("EXT_ALERT", {
+        if (!this.busy) this.sendNotification("GA_ALERT", {
           type: "warning",
           message: this.translate("GPError"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -422,7 +422,7 @@ Module.register("EXT-GooglePhotos", {
       }, 15000);
     } else {
       if (this.GPhotos.albums) {
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "information",
           message: this.translate("GPOpen"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
