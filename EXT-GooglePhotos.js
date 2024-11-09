@@ -23,7 +23,10 @@ Module.register("EXT-GooglePhotos", {
     timeFormat: "DD/MM/YYYY HH:mm",
     moduleHeight: 300,
     moduleWidth: 300,
-    uploadAlbum: null
+    uploadAlbum: null,
+    suspendWhenScreenOff: true,  // shall EXT-GooglePhotos suspend when EXT_Screen turn off the screen ?
+    time_extender: 10, // how many times multiply displayDelay when EXT_GOOGLEPHOTOS-MORE_TIME
+    photoSignalUrl: null  // where to send photo's url when signalled as not interesting  
   },
 
   start () {
@@ -124,6 +127,80 @@ Module.register("EXT-GooglePhotos", {
       case "EXT_GPHOTOPHOTOS-UPLOAD":
         this.sendSocketNotification("UPLOAD", payload);
         break;
+      case "EXT_GOOGLEPHOTOS-NEXT":
+        // stop timer
+        clearTimeout(this.GPhotos.updateTimer); 
+        // change photo
+        this.updatePhotos();
+        // restart timer
+        this.GPhotos.updateTimer = setInterval(()=>{
+          this.updatePhotos();
+        }, this.config.displayDelay);
+        break;
+      case "EXT_GOOGLEPHOTOS-PREVIOUS":
+        // return to index of photo before current
+        this.GPhotos.index -= 2;
+        // stop timer
+        clearTimeout(this.GPhotos.updateTimer); 
+        // change photo to the one before current
+        this.updatePhotos();
+        // restart timer
+        this.GPhotos.updateTimer = setInterval(()=>{ 
+          this.updatePhotos();
+        }, this.config.displayDelay);
+        break;
+      case "EXT_GOOGLEPHOTOS-MORE_TIME":  // shows photo longer
+        // stop timers
+        clearTimeout(this.GPhotos.updateTimer);
+        clearTimeout(this.fadeTimeout);
+        // restart longer timers
+        this.fadeTimeout = setTimeout(() => {
+          removeAnimateCSS("EXT_GPHOTO", this.data.animateIn ? this.data.animateIn: "fadeIn");
+          addAnimateCSS("EXT_GPHOTO", this.data.animateOut ? this.data.animateOut: "fadeOut",2);
+        }, this.config.displayDelay * this.config.time_extender - 2200);
+        this.GPhotos.updateTimer = setInterval(()=>{ 
+          this.updatePhotos();
+        }, this.config.displayDelay * this.config.time_extender);
+        break;
+      case "EXT_SCREEN-POWER":
+        if (this.config.suspendWhenScreenOff) {
+          if (payload === true) {
+            this.resume();
+          } else {
+            this.suspend();
+          }
+        }
+        break;
+      case "EXT_GOOGLEPHOTOS-SIGNAL_PHOTO":
+        if (this.config.photoSignalUrl) {
+          current_displayed_photo_index = this.GPhotos.index - 1;
+          if (current_displayed_photo_index >= 0) {
+            photoName= this.GPhotos.scanned[current_displayed_photo_index].filename;
+            this.sendNotification("GA_ALERT", {
+              type: "warning",
+              message: this.translate("GPUninterestingPhoto", { NAME: photoName }),
+              icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
+            });
+            const formData = new FormData();
+            formData.append("photoUrl", this.GPhotos.scanned[current_displayed_photo_index].productUrl);
+            formData.append("albumId", this.GPhotos.scanned[current_displayed_photo_index]._albumId);
+            formData.append("filename", photoName);
+            formData.append("creationTime", JSON.stringify(this.GPhotos.scanned[current_displayed_photo_index].mediaMetadata.creationTime));
+
+            fetch(this.config.photoSignalUrl, {
+              method: "POST",
+              body: formData
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                console.log("Success:", data);
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+          } 
+        } 
+        break;
     }
   },
 
@@ -136,7 +213,7 @@ Module.register("EXT-GooglePhotos", {
           this.GPhotos.scanned = payload;
           this.GPhotos.index = 0;
           if (this.config.debug) {
-            this.sendNotification("EXT_ALERT", {
+            this.sendNotification("GA_ALERT", {
               type: "information",
               message: this.translate("GPReceive", { VALUES: payload.length }),
               icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png",
@@ -151,7 +228,7 @@ Module.register("EXT-GooglePhotos", {
         break;
       case "ERROR":
       case "GPError":
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "error",
           message: payload,
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -265,7 +342,7 @@ Module.register("EXT-GooglePhotos", {
     hidden.onerror = () => {
       console.error("[GPHOTOS] Failed to Load Image.");
       if (!this.busy) {
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "warning",
           message: this.translate("GPFailedOpenURL"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -323,7 +400,7 @@ Module.register("EXT-GooglePhotos", {
       clearTimeout(this.GPhotos.updateTimer);
       this.GPhotos.updateTimer = null;
       if (!this.busy) {
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "warning",
           message: this.translate("GPNoPhotoFound"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -332,7 +409,7 @@ Module.register("EXT-GooglePhotos", {
       }
       this.GPhotos.warning++;
       if (this.GPhotos.warning >= 5) {
-        if (!this.busy) this.sendNotification("EXT_ALERT", {
+        if (!this.busy) this.sendNotification("GA_ALERT", {
           type: "warning",
           message: this.translate("GPError"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
@@ -345,7 +422,7 @@ Module.register("EXT-GooglePhotos", {
       }, 15000);
     } else {
       if (this.GPhotos.albums) {
-        this.sendNotification("EXT_ALERT", {
+        this.sendNotification("GA_ALERT", {
           type: "information",
           message: this.translate("GPOpen"),
           icon: "modules/EXT-GooglePhotos/resources/GooglePhoto-Logo.png"
