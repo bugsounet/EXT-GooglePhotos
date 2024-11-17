@@ -1,11 +1,11 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const GP = require("../components/GooglePhotosLib.js");
+const GP = require("../components/GooglePhotosLib");
 
 console.log("[GPHOTOS] Check credentials.json...");
-if(fs.existsSync(path.resolve(`${__dirname  }/../../MMM-GoogleAssistant/credentials.json`))) {
-  this.CREDENTIALS = path.resolve(`${__dirname  }/../../MMM-GoogleAssistant/credentials.json`);
+if (fs.existsSync(path.resolve(`${__dirname}/../../MMM-GoogleAssistant/credentials.json`))) {
+  this.CREDENTIALS = path.resolve(`${__dirname}/../../MMM-GoogleAssistant/credentials.json`);
 }
 
 if (!this.CREDENTIALS) {
@@ -24,7 +24,7 @@ var GPhotos = new GP(authOption, true);
 
 GPhotos.generateToken(
   function success () {
-    console.log ("[GPHOTOS] TokenGP is generated.");
+    console.log("[GPHOTOS] TokenGP is generated.");
     process.exit();
   },
   function fail () {

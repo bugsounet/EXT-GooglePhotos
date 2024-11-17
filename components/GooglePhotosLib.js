@@ -1,6 +1,6 @@
-/** Main @eouia code 
+/** Main @eouia code
  ** Needed review for less complexity
- ** and only usable for MMM-GoogleAssistant v4 function
+ ** and only usable for MMM-GoogleAssistant function
  **/
 
 "use strict";
@@ -16,14 +16,14 @@ const { OAuth2Client } = require("google-auth-library");
 const moment = require("moment");
 const Axios = require("axios");
 
-function sleep (ms=1000) {
+function sleep (ms = 1000) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
 }
 
-function Auth (Config, debug=false, error =()=>{}) {
-  const log = (debug) ? (...args)=>{console.log("[GPHOTOS:AUTH]", ...args);} : ()=>{};
+function Auth (Config, debug = false, error = () => {}) {
+  const log = (debug) ? (...args) => { console.log("[GPHOTOS:AUTH]", ...args); } : () => {};
   var config = Config;
   if (config === undefined) config = {};
   if (config.keyFilePath === undefined) {
@@ -48,14 +48,13 @@ function Auth (Config, debug=false, error =()=>{}) {
   const saveTokens = (first = false) => {
     oauthClient.setCredentials(tokens);
     var expired = false;
-    var now = Date.now();
     if (tokens.expiry_date < Date.now()) {
       expired = true;
       log("Token is expired.");
     }
     if (expired || first) {
       oauthClient.refreshAccessToken()
-        .then((tk)=>{
+        .then((tk) => {
           tokens = tk.credentials;
           var tp = path.resolve(__dirname, config.savedTokensPath);
           mkdirp(path.dirname(tp))
@@ -65,9 +64,9 @@ function Auth (Config, debug=false, error =()=>{}) {
               this.emit("ready", oauthClient);
             });
         })
-        .catch ((err) => { 
+        .catch((err) => {
           console.error("[GPHOTOS:AUTH] Error:", err.message);
-          error(`GPhotos: ${  err.message}`);
+          error(`GPhotos: ${err.message}`);
         });
     } else {
       log("Token is alive.");
@@ -82,7 +81,7 @@ function Auth (Config, debug=false, error =()=>{}) {
       scope: [config.scope],
       prompt: "consent"
     });
-    log(`Opening OAuth URL.\n\n${  url  }\n\nReturn here with your code.`);
+    log(`Opening OAuth URL.\n\n${url}\n\nReturn here with your code.`);
     open(url).catch(() => {
       log("Failed to automatically open the URL. Copy/paste this in your browser:\n", url);
     });
@@ -111,7 +110,7 @@ function Auth (Config, debug=false, error =()=>{}) {
         var file = path.resolve(__dirname, config.savedTokensPath);
         const tokensFile = fs.readFileSync(file);
         tokens = JSON.parse(tokensFile);
-      } catch(error) {
+      } catch {
         getTokens();
       } finally {
         if (tokens !== undefined) saveTokens();
@@ -123,9 +122,10 @@ function Auth (Config, debug=false, error =()=>{}) {
 util.inherits(Auth, EventEmitter);
 
 class GPhotos {
-  constructor (config, debug, cb =()=> {}) {
+  constructor (config, debug, cb = () => {}) {
     this.sendSocketNotification = cb;
     this.debug = false;
+
     /* @todo make default config
     if (!options.hasOwnProperty("authOption")) {
       throw new Error("Invalid auth information.")
@@ -159,14 +159,14 @@ class GPhotos {
     if (this.debug) console.log("[GPHOTOS]", ...args);
   }
 
-  onAuthReady (job=()=>{}) {
+  onAuthReady (job = () => {}) {
     var auth = null;
     try {
-      auth = new Auth(this.auth, this.debug, (error) => { this.sendSocketNotification("ERROR", error);});
+      auth = new Auth(this.auth, this.debug, (error) => { this.sendSocketNotification("ERROR", error); });
     } catch (e) {
       console.error("[GPHOTOS]", e.toString());
     }
-    auth.on("ready", (client)=>{
+    auth.on("ready", (client) => {
       job(client);
     });
   }
@@ -175,15 +175,15 @@ class GPhotos {
   async start () {
     //set timer, in case if fails to retry in 1 min
     clearTimeout(this.initializeTimer);
-    this.initializeTimer = setTimeout(()=>{
+    this.initializeTimer = setTimeout(() => {
       this.start();
-    }, 1*60*1000);
+    }, 1 * 60 * 1000);
 
     this.log("Starting Initialization");
     this.log("Getting album list");
     var albums = await this.getAlbums();
     if (this.config.uploadAlbum) {
-      var uploadAlbum = albums.find((a)=>{
+      var uploadAlbum = albums.find((a) => {
         return (a.title === this.config.uploadAlbum) ? true : false;
       });
       var needUpdateAlbumsList = false;
@@ -206,7 +206,7 @@ class GPhotos {
     if (needUpdateAlbumsList) albums = await this.getAlbums();
 
     for (var ta of this.config.albums) {
-      var matched = albums.find((a)=>{
+      var matched = albums.find((a) => {
         if (ta === a.title) return true;
         return false;
       });
@@ -221,18 +221,18 @@ class GPhotos {
     }
     this.log(`Finish Album scanning. Properly scanned: ${this.albumsScan.length}`);
     for (var a of this.albumsScan) {
-      var url = `${a.coverPhotoBaseUrl  }=w160-h160-c`;
+      var url = `${a.coverPhotoBaseUrl}=w160-h160-c`;
       var fpath = path.resolve(this.path, "cache", a.id);
       let file = fs.createWriteStream(fpath);
-      if (a.coverPhotoBaseUrl) https.get(url, (response)=>{
+      if (a.coverPhotoBaseUrl) https.get(url, (response) => {
         response.pipe(file);
       });
     }
     this.log("Initialized");
     this.sendSocketNotification("GPhotos_INIT", this.albumsScan);
-    
+
     //load cached list - if available
-    fs.readFile(`${this.path}/cache/photoListCache.json`, "utf-8", (err,data) => {
+    fs.readFile(`${this.path}/cache/photoListCache.json`, "utf-8", (err, data) => {
       if (err) { this.log("unable to load cache", err); }
       else {
         this.localPhotoList = JSON.parse(data.toString());
@@ -240,23 +240,23 @@ class GPhotos {
         this.prepAndSendChunk(5); //only 5 for extra fast startup
       }
     });
-  
+
     this.log("Initialization complete!");
     clearTimeout(this.initializeTimer);
     this.log("Start first scanning.");
     this.startScanning();
   }
-  
+
   stop () {
     clearInterval(this.scanTimer);
   }
 
   startScanning () {
     // set up interval, then 1 fail won't stop future scans
-    this.scanTimer = setInterval(()=>{
+    this.scanTimer = setInterval(() => {
       this.scanJob();
     }, this.scanInterval);
-      
+
     // call for first time
     this.scanJob();
   }
@@ -264,28 +264,28 @@ class GPhotos {
   async prepAndSendChunk (desiredChunk = 50) {
     try {
       //find which ones to refresh
-      if (this.localPhotoPntr < 0 || this.localPhotoPntr >= this.localPhotoList.length ) {this.localPhotoPntr = 0;}
+      if (this.localPhotoPntr < 0 || this.localPhotoPntr >= this.localPhotoList.length) { this.localPhotoPntr = 0; }
       var numItemsToRefresh = Math.min(desiredChunk, this.localPhotoList.length - this.localPhotoPntr, 50); //50 is api limit
       this.log(`num to ref: ${numItemsToRefresh} DesChunk: ${desiredChunk} totalLength: ${this.localPhotoList.length} Pntr: ${this.localPhotoPntr}`);
-      
-      
+
+
       // refresh them
       var list = [];
-      if (numItemsToRefresh > 0){
-        list = await this.updateTheseMediaItems(this.localPhotoList.slice(this.localPhotoPntr, this.localPhotoPntr+numItemsToRefresh));
+      if (numItemsToRefresh > 0) {
+        list = await this.updateTheseMediaItems(this.localPhotoList.slice(this.localPhotoPntr, this.localPhotoPntr + numItemsToRefresh));
       }
-            
+
       if (list.length > 0) {
         // update the localList
         this.localPhotoList.splice(this.localPhotoPntr, list.length, ...list);
-        
+
         // send updated pics
         this.sendSocketNotification("GPhotos_PICT", list);
-        
+
         // update pointer
         this.localPhotoPntr = this.localPhotoPntr + list.length;
         this.log(`refreshed: ${list.length} totalLength: ${this.localPhotoList.length} Pntr: ${this.localPhotoPntr}`);
-      
+
         this.log(`just sent ${list.length} more picts`);
       } else {
         this.log(`couldn't send ${list.length} picts`);
@@ -296,9 +296,9 @@ class GPhotos {
   }
 
   scanJob () {
-    return new Promise((resolve)=>{
+    return new Promise((resolve) => {
       this.log("Start Album scanning");
-      const step = async ()=> {
+      const step = async () => {
         try {
           if (this.albumsScan.length > 0) {
             this.photosScan = await this.getImageList();
@@ -323,14 +323,7 @@ class GPhotos {
       if (!data.hasOwnProperty("photo")) return false;
       return true;
     };
-    var sort = (a, b) => {
-      var at = moment(a.mediaMetadata.creationTime);
-      var bt = moment(b.mediaMetadata.creationTime);
-      if (at.isBefore(bt) && this.config.sort === "new") return 1;
-      if (at.isAfter(bt) && this.config.sort === "old") return 1;
-      return -1;
-    };
-    return new Promise((resolve)=>{
+    return new Promise((resolve) => {
       const step = async () => {
         var photos = [];
         try {
@@ -362,13 +355,13 @@ class GPhotos {
             fs.writeFile(`${this.path}/cache/photoListCache.json`, JSON.stringify(this.localPhotoList, null, 4), (err) => {
               if (err) {
                 console.error("[GPHOTOS]", err);
-              } else { 
+              } else {
                 this.log("Photo list cache saved");
               }
             });
           }
 
-          return(photos);
+          return (photos);
         } catch (err) {
           console.error("[GPHOTOS]", err.toString());
         }
@@ -378,8 +371,8 @@ class GPhotos {
   }
 
   /** internal functions **/
-  generateToken (success=()=>{}, fail=()=>{}) {
-    this.onAuthReady((client)=>{
+  generateToken (success = () => {}, fail = () => {}) {
+    this.onAuthReady(() => {
       const isTokenFileExist = () => {
         var fp = path.resolve(__dirname, this.auth.savedTokensPath);
         if (fs.existsSync(fp)) return true;
@@ -390,23 +383,23 @@ class GPhotos {
     });
   }
 
-  request (token, endPoint="", method="get", params=null, data=null) {
-    return new Promise((resolve)=>{
+  request (token, endPoint = "", method = "get", params = null, data = null) {
+    return new Promise((resolve) => {
       try {
         let baseURL = "https://photoslibrary.googleapis.com/v1/";
         var url = baseURL + endPoint;
         var config = {
           method: method,
           headers: {
-            Authorization: `Bearer ${  token}`
+            Authorization: `Bearer ${token}`
           }
         };
-        if (params) url = `${url  }/?${  params}`;
+        if (params) url = `${url}/?${params}`;
         if (data) config.body = JSON.stringify(data);
-        fetch(url,config)
+        fetch(url, config)
           .then((response) => response.json())
           .then((data) => resolve(data))
-          .catch((error) =>{
+          .catch((error) => {
             console.error("[GPHOTOS]", error.toString());
             console.error("[GPHOTOS] ----- Report ----- ");
             console.error("[GPHOTOS] fetch config:", config);
@@ -420,13 +413,13 @@ class GPhotos {
   }
 
   getAlbums () {
-    return new Promise((resolve)=>{
-      const step = async () =>{
+    return new Promise((resolve) => {
+      const step = async () => {
         try {
           var albums = await this.getAlbumType("albums");
           var shared = await this.getAlbumType("sharedAlbums");
           for (var s of shared) {
-            var isExist = albums.find((a)=>{
+            var isExist = albums.find((a) => {
               if (a.id === s.id) return true;
               return false;
             });
@@ -442,14 +435,13 @@ class GPhotos {
   }
 
 
-  getAlbumType (type="albums") {
+  getAlbumType (type = "albums") {
     if (type !== "albums" && type !== "sharedAlbums") throw new Error("Invalid parameter for .getAlbumType()", type);
-    return new Promise((resolve)=>{
-      this.onAuthReady((client)=>{
+    return new Promise((resolve) => {
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         var list = [];
-        var found = 0;
-        const getAlbum = async (pageSize=50, pageToken="") => {
+        const getAlbum = async (pageSize = 50, pageToken = "") => {
           this.log("Getting Album info chunks.");
           var params = new URLSearchParams({
             pageSize: pageSize,
@@ -459,7 +451,6 @@ class GPhotos {
             var data = await this.request(token, type, "get", params, null);
 
             if (data[type] && Array.isArray(data[type])) {
-              found += data[type].length;
               list = list.concat(data[type]);
             }
             if (data.nextPageToken) {
@@ -472,7 +463,7 @@ class GPhotos {
               this.albums[type] = list;
               resolve(list);
             }
-          } catch(err) {
+          } catch (err) {
             console.error("[GPHOTOS]", err.toString());
           }
         };
@@ -481,12 +472,12 @@ class GPhotos {
     });
   }
 
-  getImageFromAlbum (albumId, isValid=null, maxNum=99999) {
-    return new Promise((resolve)=>{
-      this.onAuthReady((client)=>{
+  getImageFromAlbum (albumId, isValid = null, maxNum = 99999) {
+    return new Promise((resolve) => {
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         var list = [];
-        const getImage = async (pageSize=50, pageToken="") => {
+        const getImage = async (pageSize = 50, pageToken = "") => {
           this.log(`Indexing photos now. total: ${list.length}`);
           try {
             var data = {
@@ -522,7 +513,7 @@ class GPhotos {
             } else {
               resolve(list); // empty
             }
-          } catch(err) {
+          } catch (err) {
             console.error("[GPHOTOS] .getImageFromAlbum()", err.toString());
           }
         };
@@ -532,22 +523,21 @@ class GPhotos {
   }
 
   async updateTheseMediaItems (items) {
-    return new Promise((resolve)=>{
-      if (items.length <= 0) {resolve(items);}
-      this.onAuthReady((client)=>{
+    return new Promise((resolve) => {
+      if (items.length <= 0) { resolve(items); }
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         this.log(`received: ${items.length} to refresh`);
-        var list = [];
         var params = new URLSearchParams();
         var ii;
         for (ii in items) {
           params.append("mediaItemIds", items[ii].id);
         }
-        const refr = async () => { 
+        const refr = async () => {
           var response = await this.request(token, "mediaItems:batchGet", "get", params, null);
           if (response.hasOwnProperty("mediaItemResults") && Array.isArray(response.mediaItemResults)) {
-            for (var i = 0; i< response.mediaItemResults.length; i++) {
-              if (response.mediaItemResults[i].hasOwnProperty("mediaItem")){
+            for (var i = 0; i < response.mediaItemResults.length; i++) {
+              if (response.mediaItemResults[i].hasOwnProperty("mediaItem")) {
                 items[i].baseUrl = response.mediaItemResults[i].mediaItem.baseUrl;
               }
             }
@@ -560,8 +550,8 @@ class GPhotos {
   }
 
   createAlbum (albumName) {
-    return new Promise((resolve)=>{
-      this.onAuthReady((client)=>{
+    return new Promise((resolve) => {
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         const create = async () => {
           try {
@@ -571,7 +561,7 @@ class GPhotos {
               }
             });
             resolve(created);
-          } catch(err) {
+          } catch (err) {
             this.log(".createAlbum() ", err.toString());
             this.log(err);
             throw err;
@@ -583,8 +573,8 @@ class GPhotos {
   }
 
   shareAlbum (albumId) {
-    return new Promise((resolve)=>{
-      this.onAuthReady((client)=>{
+    return new Promise((resolve) => {
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         const create = async () => {
           try {
@@ -601,7 +591,7 @@ class GPhotos {
               }
             );
             resolve(shareInfo);
-          } catch(err) {
+          } catch (err) {
             this.log(".shareAlbum()", err.toString());
             this.log(err);
             throw err;
@@ -615,8 +605,8 @@ class GPhotos {
   upload (path) {
     // to code with native fetch
     // not possible actually or ... not find how
-    return new Promise((resolve)=>{
-      this.onAuthReady((client)=>{
+    return new Promise((resolve) => {
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         const upload = async () => {
           try {
@@ -627,21 +617,21 @@ class GPhotos {
               url: url,
               baseURL: "https://photoslibrary.googleapis.com/v1/",
               headers: {
-                Authorization: `Bearer ${  token}`,
+                Authorization: `Bearer ${token}`,
                 "Content-type": "application/octet-stream",
                 //X-Goog-Upload-Content-Type: mime-type
                 "X-Goog-Upload-Protocol": "raw"
               }
             };
             option.data = newFile;
-            Axios(option).then((ret)=>{
+            Axios(option).then((ret) => {
               resolve(ret.data);
-            }).catch((e)=>{
+            }).catch((e) => {
               this.log(".upload:resultResolving ", e.toString());
               this.log(e);
               throw e;
             });
-          } catch(err) {
+          } catch (err) {
             this.log(".upload()", err.toString());
             this.log(err);
             throw err;
@@ -653,8 +643,8 @@ class GPhotos {
   }
 
   create (uploadToken, albumId) {
-    return new Promise((resolve)=>{
-      this.onAuthReady((client)=>{
+    return new Promise((resolve) => {
+      this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         const create = async () => {
           try {
@@ -681,7 +671,7 @@ class GPhotos {
               }
             );
             resolve(result);
-          } catch(err) {
+          } catch (err) {
             this.log(".create() ", err.toString());
             this.log(err);
             throw err;
@@ -695,7 +685,7 @@ class GPhotos {
   async createSharedAlbum (album) {
     try {
       var albums = await this.getAlbums();
-      var matched = albums.find((a)=>{
+      var matched = albums.find((a) => {
         if (a.title === album) return true;
         return false;
       });
@@ -704,11 +694,12 @@ class GPhotos {
       } else {
         console.log(`[GPHOTOS] Album ${album} will be created.`);
         var r = await this.createAlbum(album);
-        var s = await this.shareAlbum(r.id);
+        await this.shareAlbum(r.id);
         console.log(`[GPHOTOS] Album ${album} is created.`);
+
         /** rescan again **/
         albums = await this.getAlbums();
-        albums.find((a)=>{
+        albums.find((a) => {
           if (a.title === album) {
             this.uploadAlbumId = a.id;
             console.log(`[GPHOTOS] Configuration Updated, uploadAlbumId= ${this.uploadAlbumId}`);
@@ -728,10 +719,10 @@ class GPhotos {
       this.sendSocketNotification("ERROR", "No uploadable album exists.");
       return;
     }
-    const step = async ()=> {
+    const step = async () => {
       var uploadToken = await this.upload(path);
       if (uploadToken) {
-        var result = await this.create(uploadToken, this.uploadAlbumId);
+        await this.create(uploadToken, this.uploadAlbumId);
         console.log(`[GPHOTOS] Upload completed. [${path}]`);
       } else {
         console.error("[GPHOTOS] Upload Fails.");
@@ -746,6 +737,6 @@ class GPhotos {
 async function loadOpen () {
   const loaded = await import("open");
   return loaded.default;
-};
+}
 
 module.exports = GPhotos;
