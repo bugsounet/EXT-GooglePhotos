@@ -8,7 +8,9 @@
 
 /** Todo : create a displayer class **/
 
-logGP = (...args) => { /* do nothing */ };
+/* global removeAnimateCSS, addAnimateCSS */
+
+var logGP = () => { /* do nothing */ };
 
 Module.register("EXT-GooglePhotos", {
   defaults: {
@@ -174,9 +176,9 @@ Module.register("EXT-GooglePhotos", {
         break;
       case "EXT_GOOGLEPHOTOS-SIGNAL_PHOTO":
         if (this.config.photoSignalUrl) {
-          current_displayed_photo_index = this.GPhotos.index - 1;
+          let current_displayed_photo_index = this.GPhotos.index - 1;
           if (current_displayed_photo_index >= 0) {
-            photoName = this.GPhotos.scanned[current_displayed_photo_index].filename;
+            let photoName = this.GPhotos.scanned[current_displayed_photo_index].filename;
             this.sendNotification("GA_ALERT", {
               type: "warning",
               message: this.translate("GPUninterestingPhoto", { NAME: photoName }),
@@ -207,8 +209,6 @@ Module.register("EXT-GooglePhotos", {
 
   socketNotificationReceived (noti, payload) {
     switch (noti) {
-
-      /** GPhotos **/
       case "GPhotos_PICT":
         if (payload && Array.isArray(payload) && payload.length > 0) {
           this.GPhotos.needMorePicsFlag = false;
@@ -323,10 +323,7 @@ Module.register("EXT-GooglePhotos", {
     if (this.GPhotos.index < 0) this.GPhotos.index = 0;
     if (this.GPhotos.index >= this.GPhotos.scanned.length) this.GPhotos.index = 0;
     var target = this.GPhotos.scanned[this.GPhotos.index];
-    if (this.config.hiResolution) {
-      var url = `${target.baseUrl}=w1080-h1920`;
-    }
-    else var url = target.baseUrl;
+    var url = this.config.hiResolution ? `${target.baseUrl}=w1080-h1920` : target.baseUrl;
     this.ready(url, target);
     this.GPhotos.index++;
     if (this.GPhotos.index >= this.GPhotos.scanned.length) {
@@ -356,7 +353,6 @@ Module.register("EXT-GooglePhotos", {
     hidden.onload = () => {
       var back = document.getElementById("EXT_GPHOTO_BACK");
       var current = document.getElementById("EXT_GPHOTO_CURRENT");
-      var dom = document.getElementById("EXT_GPHOTO");
       if (this.config.displayBackground) back.style.backgroundImage = `url(${url})`;
       current.style.backgroundImage = `url(${url})`;
       removeAnimateCSS("EXT_GPHOTO", this.data.animateOut ? this.data.animateOut : "fadeOut");

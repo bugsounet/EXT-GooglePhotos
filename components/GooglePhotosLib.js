@@ -1,6 +1,6 @@
 /** Main @eouia code
  ** Needed review for less complexity
- ** and only usable for MMM-GoogleAssistant v4 function
+ ** and only usable for MMM-GoogleAssistant function
  **/
 
 "use strict";
@@ -48,7 +48,6 @@ function Auth (Config, debug = false, error = () => {}) {
   const saveTokens = (first = false) => {
     oauthClient.setCredentials(tokens);
     var expired = false;
-    var now = Date.now();
     if (tokens.expiry_date < Date.now()) {
       expired = true;
       log("Token is expired.");
@@ -111,7 +110,7 @@ function Auth (Config, debug = false, error = () => {}) {
         var file = path.resolve(__dirname, config.savedTokensPath);
         const tokensFile = fs.readFileSync(file);
         tokens = JSON.parse(tokensFile);
-      } catch (error) {
+      } catch {
         getTokens();
       } finally {
         if (tokens !== undefined) saveTokens();
@@ -324,13 +323,6 @@ class GPhotos {
       if (!data.hasOwnProperty("photo")) return false;
       return true;
     };
-    var sort = (a, b) => {
-      var at = moment(a.mediaMetadata.creationTime);
-      var bt = moment(b.mediaMetadata.creationTime);
-      if (at.isBefore(bt) && this.config.sort === "new") return 1;
-      if (at.isAfter(bt) && this.config.sort === "old") return 1;
-      return -1;
-    };
     return new Promise((resolve) => {
       const step = async () => {
         var photos = [];
@@ -380,7 +372,7 @@ class GPhotos {
 
   /** internal functions **/
   generateToken (success = () => {}, fail = () => {}) {
-    this.onAuthReady((client) => {
+    this.onAuthReady(() => {
       const isTokenFileExist = () => {
         var fp = path.resolve(__dirname, this.auth.savedTokensPath);
         if (fs.existsSync(fp)) return true;
@@ -449,7 +441,6 @@ class GPhotos {
       this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         var list = [];
-        var found = 0;
         const getAlbum = async (pageSize = 50, pageToken = "") => {
           this.log("Getting Album info chunks.");
           var params = new URLSearchParams({
@@ -460,7 +451,6 @@ class GPhotos {
             var data = await this.request(token, type, "get", params, null);
 
             if (data[type] && Array.isArray(data[type])) {
-              found += data[type].length;
               list = list.concat(data[type]);
             }
             if (data.nextPageToken) {
@@ -538,7 +528,6 @@ class GPhotos {
       this.onAuthReady((client) => {
         var token = client.credentials.access_token;
         this.log(`received: ${items.length} to refresh`);
-        var list = [];
         var params = new URLSearchParams();
         var ii;
         for (ii in items) {
@@ -705,7 +694,7 @@ class GPhotos {
       } else {
         console.log(`[GPHOTOS] Album ${album} will be created.`);
         var r = await this.createAlbum(album);
-        var s = await this.shareAlbum(r.id);
+        await this.shareAlbum(r.id);
         console.log(`[GPHOTOS] Album ${album} is created.`);
 
         /** rescan again **/
@@ -733,7 +722,7 @@ class GPhotos {
     const step = async () => {
       var uploadToken = await this.upload(path);
       if (uploadToken) {
-        var result = await this.create(uploadToken, this.uploadAlbumId);
+        await this.create(uploadToken, this.uploadAlbumId);
         console.log(`[GPHOTOS] Upload completed. [${path}]`);
       } else {
         console.error("[GPHOTOS] Upload Fails.");

@@ -3,9 +3,9 @@
 const fs = require("fs");
 const path = require("path");
 var NodeHelper = require("node_helper");
-const GPhotos = require("./components/GooglePhotosLib.js");
+const GPhotos = require("./components/GooglePhotosLib");
 
-var logGP = (...args) => { /* do nothing */ };
+var logGP = () => { /* do nothing */ };
 
 module.exports = NodeHelper.create({
   start () {
